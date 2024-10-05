@@ -2,7 +2,6 @@ import GUI from 'lil-gui'
 import {
   AmbientLight,
   AxesHelper,
-  BoxGeometry,
   Clock,
   GridHelper,
   LoadingManager,
@@ -24,6 +23,7 @@ import * as animations from './helpers/animations'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
+import {Skybox} from "./objects/skybox";
 
 const CANVAS_ID = 'scene'
 
@@ -95,16 +95,8 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    const sideLength = 1
-    const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-    const cubeMaterial = new MeshStandardMaterial({
-      color: '#f69f1f',
-      metalness: 0.5,
-      roughness: 0.7,
-    })
-    cube = new Mesh(cubeGeometry, cubeMaterial)
-    cube.castShadow = true
-    cube.position.y = 0.5
+    const skybox = new Skybox();
+    scene.add(skybox.getMesh());
 
     const planeGeometry = new PlaneGeometry(3, 3)
     const planeMaterial = new MeshLambertMaterial({
@@ -118,14 +110,12 @@ function init() {
     const plane = new Mesh(planeGeometry, planeMaterial)
     plane.rotateX(Math.PI / 2)
     plane.receiveShadow = true
-
-    scene.add(cube)
     scene.add(plane)
   }
 
   // ===== 🎥 CAMERA =====
   {
-    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
+    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 9999)
     camera.position.set(2, 2, 5)
   }
 
