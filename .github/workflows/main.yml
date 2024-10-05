@@ -51,12 +51,9 @@ jobs:
 
       - name: Deploy to Build Branch
         run: |
-          git add -f *
+          git add -f dist/*
 
-          git reset node_modules/
-          git reset dist/
-
-          git commit -m "Deploy to build branch"
+          git commit -m "Deploy to build branch" || echo "No changes to commit"
           git push --force origin build
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}  # Use the App's GitHub token
