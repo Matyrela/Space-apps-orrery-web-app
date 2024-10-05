@@ -28,12 +28,16 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: Clean build branch
+      - name: Build and deploy
         run: |
           mkdir dist
           cd dist
 
           git init
+
+          git config user.name "gualter"
+          git config user.email "gualter@gualter.com"
+          
 
           git remote add origin https://github.com/Matyrela/Space-apps-orrery-web-app.git
           git fetch origin build || echo "No build branch yet"
@@ -42,13 +46,9 @@ jobs:
 
           cd ..
 
-      - name: Install Dependencies and Build
-        run: |
           npm install
           npm run build
 
-      - name: Setup Build Branch and deploy
-        run: |
           cd dist
 
           git config user.name "github-actions[bot]"
