@@ -35,8 +35,8 @@ jobs:
 
           git init
 
-          git config user.name "gualter"
-          git config user.email "gualter@gualter.com"
+          git config --global user.name "gualter"
+          git config --global user.email "gualter@gualter.com"
           
 
           git remote add origin https://github.com/Matyrela/Space-apps-orrery-web-app.git
