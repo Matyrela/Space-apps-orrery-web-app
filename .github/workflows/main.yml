@@ -3,27 +3,33 @@ name: Deploy to Build Branch
 on:
   push:
     branches:
-      - main
+      - main  # Ejecutar el workflow cuando haya un push a la rama `main`
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout del código
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Instalar dependencias y construir el proyecto
       - name: Install and Build
         run: |
           npm install
           npm run build
 
+      # 3. Configurar git para hacer commit y push
       - name: Configure git
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
+      # 4. Subir el contenido de `dist` a la rama `build`
       - name: Deploy to Build Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Permite a GitHub Actions hacer push
         run: |
           git switch --orphan build  # Crea una rama `build` sin historial
           git reset --hard  # Elimina cualquier rastro anterior
