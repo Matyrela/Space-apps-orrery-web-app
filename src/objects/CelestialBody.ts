@@ -163,7 +163,7 @@ export class CelestialBody {
   }
 
   getPosition() {
-    return this.position;
+    return this.mesh.position;
   }
 
   getRadius() {

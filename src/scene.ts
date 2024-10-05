@@ -192,7 +192,7 @@ function init() {
         "Earth",
         1,
         5.972e24,
-        "/earth.png",
+        "/earthMap.png",
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
