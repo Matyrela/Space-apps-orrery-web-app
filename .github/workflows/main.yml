@@ -43,7 +43,7 @@ jobs:
 
           git checkout -b build || git checkout build
 
-          cd..
+          cd ..
 
       - name: Install Dependencies and Build
         run: |
