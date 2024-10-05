@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CelestialBodyList } from './CelestialBodyList';
+import {FrontSide} from "three";
 
 export class CelestialBody {
     name: string;
@@ -21,7 +22,9 @@ export class CelestialBody {
         time: number,
         initialPosition: THREE.Vector3,
         initialVelocity: THREE.Vector3,
-        orbitCenter: CelestialBody | undefined
+        orbitCenter: CelestialBody | undefined = undefined,
+        castShadow: boolean = false,
+        emissive: number = 0x000000
     ) {
         this.name = name;
         this.radius = radius;
@@ -40,7 +43,22 @@ export class CelestialBody {
         }else{
             this.texture = texture;
         }
-        const material = new THREE.MeshBasicMaterial({map:this.texture, side: THREE.FrontSide}); // Color amarillo por defecto
+
+        let material;
+
+        if (castShadow) {
+            material = new THREE.MeshLambertMaterial({
+                map: this.texture,
+                side: FrontSide,
+                emissive: emissive,
+                emissiveIntensity: 0.2
+            });
+        } else {
+            material = new THREE.MeshBasicMaterial({
+                map: this.texture,
+                side: FrontSide,
+            });
+        }
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
         CelestialBodyList.getInstance().addCelestialBody(this);

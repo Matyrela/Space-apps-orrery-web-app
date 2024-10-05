@@ -131,7 +131,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        undefined
     )
 
     let pelota = new CelestialBody(
@@ -142,7 +141,6 @@ function init() {
         1,
         new Vector3(2, 3, 0),
         new Vector3(0, 0, 0),
-        undefined
     )
 
     scene.add(...celestialBodyList.getMeshes());
