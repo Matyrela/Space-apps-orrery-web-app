@@ -44,6 +44,7 @@ export class Skybox {
         this.camera = camera
 
         this.swapDistance = radius * 0.9;
+        this.update();
     }
 
     getMesh(): THREE.Mesh[] {
@@ -51,6 +52,7 @@ export class Skybox {
     }
 
     update() {
+        console.log("Updating skybox")
         let distance = this.camera.position.distanceTo(new Vector3(0, 0, 0))
         if (distance < this.swapDistance) {
             this.skyboxMesh.visible = true
