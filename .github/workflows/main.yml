@@ -31,21 +31,33 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
 
       # 3. Build the project
-      - name: Install and Build
+      - name: Install Dependencies and Build
         run: |
           npm install
           npm run build
 
-      # 4. Deploy `dist` to `build` branch
+      - name: Setup Build Branch
+        run: |
+          cd dist
+          git init
+
+          git config --global user.name "Gualter"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git remote add origin https://github.com/Matyrela/Space-apps-orrery-web-app.git
+          git fetch origin build || echo "No build branch yet"
+
+          git checkout -b build || git checkout build
+          git rm -rf . # Eliminar todo el contenido de la rama `build`
+
       - name: Deploy to Build Branch
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git switch --orphan build  # Create a new `build` branch without history
-          git reset --hard
-          cp -r dist/* .  # Copy all contents of `dist` to the root
-          git add .
+          git add *
+
+          git reset node_modules/
+          git reset dist/
+
           git commit -m "Deploy to build branch"
-          git push -f origin build  # Force push to `build` branch
+          git push --force origin build
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}  # Use the App's GitHub token
