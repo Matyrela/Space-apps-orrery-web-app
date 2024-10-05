@@ -1,0 +1,33 @@
+name: Deploy to Build Branch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+
+      - name: Configure git
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy to Build Branch
+        run: |
+          git switch --orphan build  # Crea una rama `build` sin historial
+          git reset --hard  # Elimina cualquier rastro anterior
+          cp -r dist/* .  # Copia el contenido de `dist` a la raíz
+          git add .
+          git commit -m "Deploy build"
+          git push -f origin build  # Hace push forzado a `build`
