@@ -1,7 +1,7 @@
 import GUI from 'lil-gui'
 import {
   AmbientLight,
-  AxesHelper,
+  AxesHelper, Color,
   //Clock,
   GridHelper,
   LoadingManager,
@@ -13,7 +13,7 @@ import {
   PlaneGeometry,
   PointLight,
   PointLightHelper,
-  Scene, Vector3,
+  Scene, Texture, Vector3,
   WebGLRenderer,
 } from 'three'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
@@ -23,6 +23,10 @@ import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
 import {Skybox} from "./objects/skybox";
+import {CelestialBodyList} from "./objects/CelestialBodyList";
+import {CelestialBody} from "./objects/CelestialBody";
+import {texture} from "three/src/nodes/accessors/TextureNode";
+import {color} from "three/src/nodes/tsl/TSLCore";
 
 const CANVAS_ID = 'scene'
 
@@ -45,6 +49,7 @@ let stats: Stats
 let gui: GUI
 
 let skybox: Skybox
+let celestialBodyList: CelestialBodyList
 
 const animation = { enabled: true, play: true }
 
@@ -100,10 +105,6 @@ function init() {
   {
     camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, renderSize * 8)
     camera.position.set(2, 2, 5)
-
-    camera.onBeforeRender = () => {
-      skybox.update();
-    }
   }
 
   // ===== 📦 OBJECTS =====
@@ -125,6 +126,32 @@ function init() {
 
     skybox = new Skybox(0,0,0, renderSize/2, camera);
     scene.add(...skybox.getMesh());
+
+    celestialBodyList = CelestialBodyList.getInstance();
+
+    let earth = new CelestialBody(
+        "Earth",
+        1,
+        1,
+        "/earth.png",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        undefined
+    )
+
+    let pelota = new CelestialBody(
+        "Pelota",
+        0.5,
+        1,
+        '/blanco.png',
+        1,
+        new Vector3(2, 3, 0),
+        new Vector3(0, 0, 0),
+        undefined
+    )
+
+    scene.add(...celestialBodyList.getMeshes());
   }
 
   // ===== 🕹️ CONTROLS =====
@@ -241,6 +268,11 @@ function animate() {
     const canvas = renderer.domElement
     camera.aspect = canvas.clientWidth / canvas.clientHeight
     camera.updateProjectionMatrix()
+
+    //BORRAR
+    skybox.update();
+
+
   }
 
   cameraControls.update()

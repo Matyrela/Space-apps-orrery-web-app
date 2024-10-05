@@ -1,4 +1,5 @@
 import { CelestialBody } from './CelestialBody';
+import * as THREE from 'three';
 
 export class CelestialBodyList {
     private static instance: CelestialBodyList;
@@ -22,4 +23,10 @@ export class CelestialBodyList {
     public getCelestialBodies(): CelestialBody[] {
         return this.celestialBodies;
     }
+
+    public getMeshes(): THREE.Mesh[] {
+        return this.celestialBodies.map(celestialBody => celestialBody.mesh);
+    }
+
+
 }

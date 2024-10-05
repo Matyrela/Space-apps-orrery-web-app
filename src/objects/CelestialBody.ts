@@ -17,7 +17,7 @@ export class CelestialBody {
         name: string,
         radius: number,
         mass: number,
-        textuePath: string,
+        texture: string | THREE.Texture,
         time: number,
         initialPosition: THREE.Vector3,
         initialVelocity: THREE.Vector3,
@@ -35,7 +35,11 @@ export class CelestialBody {
             this.orbitCenter = orbitCenter;
         }
         const geometry = new THREE.SphereGeometry(radius, 32, 32);
-        this.texture = new THREE.TextureLoader().load(textuePath);
+        if (typeof texture === 'string') {
+            this.texture = new THREE.TextureLoader().load(texture);
+        }else{
+            this.texture = texture;
+        }
         const material = new THREE.MeshBasicMaterial({map:this.texture, side: THREE.FrontSide}); // Color amarillo por defecto
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
