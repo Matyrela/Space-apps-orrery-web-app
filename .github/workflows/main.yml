@@ -44,6 +44,8 @@ jobs:
           git checkout -b build || git checkout build
 
           cd ..
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: Install Dependencies and Build
         run: |
