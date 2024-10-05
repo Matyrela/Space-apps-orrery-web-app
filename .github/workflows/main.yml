@@ -23,7 +23,7 @@ jobs:
           run: |
               mkdir -p ~/.ssh
               ssh-keyscan github.com >> ~/.ssh/known_hosts
-              ssh-agent -a $VERSION_BUMPER_SECRET > /dev/null
+              ssh-agent -a $SSH_AUTH_SOCK > /dev/null
               ssh-add - <<< "${{ secrets.VERSION_BUMPER_SECRET }}"
 
       -   name: Some task that fetches dependencies
