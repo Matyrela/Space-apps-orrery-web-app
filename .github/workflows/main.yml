@@ -48,7 +48,6 @@ jobs:
           git fetch origin build || echo "No build branch yet"
 
           git checkout -b build || git checkout build
-          git rm -rf . # Eliminar todo el contenido de la rama `build`
 
       - name: Deploy to Build Branch
         run: |
