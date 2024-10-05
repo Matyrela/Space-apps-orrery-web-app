@@ -3,62 +3,60 @@ name: Deploy to Build Branch
 on:
   push:
     branches:
-      - main  # Ejecutar el flujo de trabajo al hacer push en la rama `main`
+      - main
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # Necesario para hacer push de los cambios en la rama
+      contents: write
 
     steps:
-      # 1. Generar un Token de la App de GitHub
       - uses: actions/create-github-app-token@v1
         id: app-token
         with:
-          app-id: ${{ vars.VERSION_BUMPER_APPID }}  # ID de la App de GitHub
-          private-key: ${{ secrets.VERSION_BUMPER_SECRET }}  # Clave privada de la App de GitHub
+          app-id: ${{ vars.VERSION_BUMPER_APPID }}
+          private-key: ${{ secrets.VERSION_BUMPER_SECRET }}
 
-      # 2. Clonar el código usando el Token de la App de GitHub
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
-      # 3. Instalar dependencias y construir el proyecto
-      - name: Install Dependencies and Build
+      - name: Clean build branch
         run: |
-          npm install
-          npm run build
-
-      # 4. Configurar la rama de despliegue y desplegar
-      - name: Setup Build Branch and Deploy
-        run: |
+          mkdir dist
           cd dist
+
           git init
 
-          git config --global user.name "github-actions[bot]"
+          git config --global user.name "Gualter"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
           git remote add origin https://github.com/Matyrela/Space-apps-orrery-web-app.git
           git fetch origin build || echo "No build branch yet"
 
-          # Cambiar a la rama build
-          git checkout build || git checkout -b build
+          git checkout -b build || git checkout build
 
-          # Eliminar todo el contenido actual de la rama `build`
-          git rm -rf . # Eliminar todo el contenido de la rama build
-          
-          # Asegurarse de agregar solo los archivos de la carpeta dist
-          cp -r * .. # Mover el contenido de dist a la raíz temporalmente
-          cd ..
-          git add . # Agregar todo el contenido que se copió
+          cd..
+
+      - name: Install Dependencies and Build
+        run: |
+          npm install
+          npm run build
+
+      - name: Setup Build Branch and deploy
+        run: |
           cd dist
-
-          # Hacer commit de los cambios
+          
+          git add *
+          
           git commit -m "Deploy to build branch" || echo "No changes to commit"
           git push --force origin build
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}  # Usar el token de la App de GitHub
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
