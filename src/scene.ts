@@ -126,13 +126,22 @@ function init() {
     let earth = new CelestialBody(
         "Earth",
         1,
-        1,
+        5.972e24,
         "/earth.png",
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
+        null,
+        1.00000018,
+        new Date(Date.UTC(2000, 0, 3, 0, 0, 0)),
+        0.01673163,
+        102.93005885,
+        -5.11260389,
+        -0.00054346,
+        true
     )
 
+    /*
     let pelota = new CelestialBody(
         "Pelota",
         0.5,
@@ -141,7 +150,12 @@ function init() {
         1,
         new Vector3(2, 3, 0),
         new Vector3(0, 0, 0),
+        earth,
+        1,
+        new Date(Date.UTC(2000, 0, 3, 0, 0, 0)),
+        true
     )
+    */
 
     scene.add(...celestialBodyList.getMeshes());
   }
@@ -231,6 +245,10 @@ function animate() {
     const canvas = renderer.domElement
     camera.aspect = canvas.clientWidth / canvas.clientHeight
     camera.updateProjectionMatrix()
+
+    CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
+        celestialBody.update(new Date())
+    })
   }
 
   cameraControls.update()
