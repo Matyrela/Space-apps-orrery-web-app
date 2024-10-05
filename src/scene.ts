@@ -1,32 +1,28 @@
 import GUI from 'lil-gui'
 import {
   AmbientLight,
-  AxesHelper, Color,
-  //Clock,
+  AxesHelper,
   GridHelper,
   LoadingManager,
   Mesh,
   MeshLambertMaterial,
-  MeshStandardMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
   PointLight,
   PointLightHelper,
-  Scene, Texture, Vector3,
+  Scene,
+  Vector3,
   WebGLRenderer,
 } from 'three'
-import { DragControls } from 'three/examples/jsm/controls/DragControls'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import { toggleFullScreen } from './helpers/fullscreen'
-import { resizeRendererToDisplaySize } from './helpers/responsiveness'
+import {toggleFullScreen} from './helpers/fullscreen'
+import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style-map.css'
 import {Skybox} from "./objects/skybox";
 import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
-import {texture} from "three/src/nodes/accessors/TextureNode";
-import {color} from "three/src/nodes/tsl/TSLCore";
 
 const CANVAS_ID = 'scene'
 
@@ -38,10 +34,8 @@ let scene: Scene
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 let pointLight: PointLight
-let cube: Mesh
 let camera: PerspectiveCamera
 let cameraControls: OrbitControls
-let dragControls: DragControls
 let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
 //let clock: Clock
@@ -137,7 +131,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        undefined
     )
 
     let pelota = new CelestialBody(
@@ -148,7 +141,6 @@ function init() {
         1,
         new Vector3(2, 3, 0),
         new Vector3(0, 0, 0),
-        undefined
     )
 
     scene.add(...celestialBodyList.getMeshes());
@@ -162,36 +154,7 @@ function init() {
     cameraControls.autoRotate = false
     cameraControls.update()
 
-    dragControls = new DragControls([cube], camera, renderer.domElement)
-    dragControls.addEventListener('hoveron', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('orange')
-    })
-    dragControls.addEventListener('hoveroff', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('black')
-    })
-    dragControls.addEventListener('dragstart', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      cameraControls.enabled = false
-      animation.play = false
-      material.emissive.set('black')
-      material.opacity = 0.7
-      material.needsUpdate = true
-    })
-    dragControls.addEventListener('dragend', (event) => {
-      cameraControls.enabled = true
-      animation.play = true
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('black')
-      material.opacity = 1
-      material.needsUpdate = true
-    })
-    dragControls.enabled = false
+    cameraControls.addEventListener('change', () => {skybox.update();})
 
     // Full screen
     window.addEventListener('dblclick', (event) => {
@@ -268,11 +231,6 @@ function animate() {
     const canvas = renderer.domElement
     camera.aspect = canvas.clientWidth / canvas.clientHeight
     camera.updateProjectionMatrix()
-
-    //BORRAR
-    skybox.update();
-
-
   }
 
   cameraControls.update()

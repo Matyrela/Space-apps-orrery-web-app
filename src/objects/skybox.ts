@@ -44,6 +44,7 @@ export class Skybox {
         this.camera = camera
 
         this.swapDistance = radius * 0.9;
+        this.update();
     }
 
     getMesh(): THREE.Mesh[] {
