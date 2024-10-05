@@ -2,7 +2,7 @@ import GUI from 'lil-gui'
 import {
   AmbientLight,
   AxesHelper,
-  Clock,
+  //Clock,
   GridHelper,
   LoadingManager,
   Mesh,
@@ -13,19 +13,20 @@ import {
   PlaneGeometry,
   PointLight,
   PointLightHelper,
-  Scene,
+  Scene, Vector3,
   WebGLRenderer,
 } from 'three'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import * as animations from './helpers/animations'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
 import {Skybox} from "./objects/skybox";
 
 const CANVAS_ID = 'scene'
+
+const renderSize = 100000
 
 let canvas: HTMLElement
 let renderer: WebGLRenderer
@@ -39,9 +40,11 @@ let cameraControls: OrbitControls
 let dragControls: DragControls
 let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
-let clock: Clock
+//let clock: Clock
 let stats: Stats
 let gui: GUI
+
+let skybox: Skybox
 
 const animation = { enabled: true, play: true }
 
@@ -93,11 +96,18 @@ function init() {
     scene.add(pointLight)
   }
 
+  // ===== 🎥 CAMERA =====
+  {
+    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, renderSize * 8)
+    camera.position.set(2, 2, 5)
+
+    camera.onBeforeRender = () => {
+      skybox.update();
+    }
+  }
+
   // ===== 📦 OBJECTS =====
   {
-    const skybox = new Skybox();
-    scene.add(skybox.getMesh());
-
     const planeGeometry = new PlaneGeometry(3, 3)
     const planeMaterial = new MeshLambertMaterial({
       color: 'gray',
@@ -111,18 +121,16 @@ function init() {
     plane.rotateX(Math.PI / 2)
     plane.receiveShadow = true
     scene.add(plane)
-  }
 
-  // ===== 🎥 CAMERA =====
-  {
-    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 9999)
-    camera.position.set(2, 2, 5)
+
+    skybox = new Skybox(0,0,0, renderSize/2, camera);
+    scene.add(...skybox.getMesh());
   }
 
   // ===== 🕹️ CONTROLS =====
   {
     cameraControls = new OrbitControls(camera, canvas)
-    cameraControls.target = cube.position.clone()
+    cameraControls.target = new Vector3(0, 0, 0)
     cameraControls.enableDamping = true
     cameraControls.autoRotate = false
     cameraControls.update()
@@ -183,7 +191,7 @@ function init() {
 
   // ===== 📈 STATS & CLOCK =====
   {
-    clock = new Clock()
+    //clock = new Clock()
     stats = new Stats()
     document.body.appendChild(stats.dom)
   }
@@ -191,32 +199,6 @@ function init() {
   // ==== 🐞 DEBUG GUI ====
   {
     gui = new GUI({ title: '🐞 Debug GUI', width: 300 })
-
-    const cubeOneFolder = gui.addFolder('Cube one')
-
-    cubeOneFolder.add(cube.position, 'x').min(-5).max(5).step(0.5).name('pos x')
-    cubeOneFolder.add(cube.position, 'y').min(-5).max(5).step(0.5).name('pos y')
-    cubeOneFolder.add(cube.position, 'z').min(-5).max(5).step(0.5).name('pos z')
-
-    cubeOneFolder.add(cube.material, 'wireframe')
-    cubeOneFolder.addColor(cube.material, 'color')
-    cubeOneFolder.add(cube.material, 'metalness', 0, 1, 0.1)
-    cubeOneFolder.add(cube.material, 'roughness', 0, 1, 0.1)
-
-    cubeOneFolder
-      .add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate x')
-    cubeOneFolder
-      .add(cube.rotation, 'y', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate y')
-    cubeOneFolder
-      .add(cube.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-      .name('rotate z')
-
-    cubeOneFolder.add(animation, 'enabled').name('animated')
-
-    const controlsFolder = gui.addFolder('Controls')
-    controlsFolder.add(dragControls, 'enabled').name('drag controls')
 
     const lightsFolder = gui.addFolder('Lights')
     lightsFolder.add(pointLight, 'visible').name('point light')
@@ -254,11 +236,6 @@ function animate() {
   requestAnimationFrame(animate)
 
   stats.update()
-
-  if (animation.enabled && animation.play) {
-    animations.rotate(cube, clock, Math.PI / 3)
-    animations.bounce(cube, clock, 1, 0.5, 0.5)
-  }
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement
