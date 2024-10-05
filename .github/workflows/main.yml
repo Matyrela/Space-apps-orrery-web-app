@@ -29,7 +29,6 @@ jobs:
       -   name: Some task that fetches dependencies
           env:
               SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          run: ./fetch-deps.sh
           
       - uses: actions/create-github-app-token@v1
         id: app-token
