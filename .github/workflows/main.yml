@@ -3,7 +3,7 @@ name: Deploy to Build Branch
 on:
   push:
     branches:
-      - main
+      - main  # Run the workflow on pushes to `main` branch
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -13,60 +13,40 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: write  # Required to push changes to the branch
 
     steps:
-      - uses: actions/checkout@v1
+      # 1. Generate a GitHub App Token
       - uses: actions/create-github-app-token@v1
         id: app-token
         with:
-          app-id: ${{ vars.VERSION_BUMPER_APPID }}
-          private-key: ${{ secrets.VERSION_BUMPER_SECRET }}
-          
-      - name: Setup SSH Keys and known_hosts
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.VERSION_BUMPER_SECRET }}"
+          app-id: ${{ vars.VERSION_BUMPER_APPID }}  # App ID of the GitHub App
+          private-key: ${{ secrets.VERSION_BUMPER_SECRET }}  # Private Key of the GitHub App
 
+      # 2. Checkout the code using the GitHub App Token
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: Build and deploy
+      # 3. Build the project
+      - name: Install and Build
         run: |
-          mkdir dist
-          cd dist
-
-          git init
-
-          git config --global user.name "gualter"
-          git config --global user.email "gualter@gualter.com"
-          
-
-          git remote add origin git@github.com:Matyrela/Space-apps-orrery-web-app.git
-          git fetch origin build || echo "No build branch yet"
-
-          git checkout -b build || git checkout build
-
-          cd ..
-
           npm install
           npm run build
-
-          cd dist
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add *
-          
-          git commit -m "Deploy to build branch" || echo "No changes to commit"
-          git push --force origin build
+      # 4. Deploy `dist` to `build` branch
+      - name: Deploy to Build Branch
+        run: |
+          git config user.name "Gualter"
+          git config user.email "gualter@gualter.com"
+          git switch --orphan build
+          git reset --hard
+          cp -r dist/* .
+          git add .
+          git reset node_modules/
+          git reset dist/
+          git commit -m "Deploy to build branch"
+          git push -f origin build  # Force push to `build` branch
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}  # Use the App's GitHub token
