@@ -3,35 +3,49 @@ name: Deploy to Build Branch
 on:
   push:
     branches:
-      - main  # Ejecutar el workflow cuando haya un push a la rama `main`
+      - main  # Run the workflow on pushes to `main` branch
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
-    steps:
-      # 1. Checkout del código
-      - name: Checkout code
-        uses: actions/checkout@v3
+    permissions:
+      contents: write  # Required to push changes to the branch
 
-      # 2. Instalar dependencias y construir el proyecto
+    steps:
+      # 1. Generate a GitHub App Token
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.VERSION_BUMPER_APPID }}  # App ID of the GitHub App
+          private-key: ${{ secrets.VERSION_BUMPER_SECRET }}  # Private Key of the GitHub App
+
+      # 2. Checkout the code using the GitHub App Token
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      # 3. Build the project
       - name: Install and Build
         run: |
           npm install
           npm run build
 
-      # 3. Configurar git para hacer commit y push
-      - name: Configure git
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-
-      # 4. Subir el contenido de `dist` a la rama `build`
+      # 4. Deploy `dist` to `build` branch
       - name: Deploy to Build Branch
         run: |
-          git switch --orphan build  # Crea una rama `build` sin historial
-          git reset --hard  # Elimina cualquier rastro anterior
-          cp -r dist/* .  # Copia el contenido de `dist` a la raíz
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch --orphan build  # Create a new `build` branch without history
+          git reset --hard
+          cp -r dist/* .  # Copy all contents of `dist` to the root
           git add .
-          git commit -m "Deploy build"
-          git push -f origin build  # Hace push forzado a `build`
+          git commit -m "Deploy to build branch"
+          git push -f origin build  # Force push to `build` branch
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}  # Use the App's GitHub token
