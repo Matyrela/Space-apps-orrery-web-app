@@ -1,3 +1,114 @@
-body{
-    background: rebeccapurple;
+@import url('https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Sixtyfour+Convergence&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap');
+
+body {
+    background: #000000;
+    color: white;
+    font-family: 'Chakra Petch', sans-serif;
+    margin: 0;
+    padding: 0;
 }
+
+h1{
+    font-family: 'Sixtyfour Convergence', sans-serif;
+}
+
+h1, p {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.navbar-brand {
+    font-family: 'Chakra Petch', sans-serif;
+    color: #ffffff;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+}
+
+.nav-link {
+    color: #ffffff;
+}
+
+.nav-link:hover {
+    color: #FF3D00;
+    text-shadow: 0px 0px 5px rgba(255, 61, 0, 0.5);
+}
+
+.hero-section {
+    padding: 4rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    margin-top: 12rem;
+    position: relative;
+}
+
+.btn-primary {
+    background-color: #cd4614;
+    border: none;
+    color: #fff;
+    font-size: 1.25rem;
+    padding: 10px 20px;
+    margin: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #cd4614;
+    box-shadow: 0px 4px 15px rgba(255, 69, 0, 0.5);
+}
+
+.btn-outline-light {
+    border: 2px solid #2182e3;
+    color: #feffff;
+    padding: 10px 20px;
+    font-size: 1.25rem;
+    margin: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+    background-color: #3880b4;
+    color: #ffffff;
+    box-shadow: 0px 4px 15px rgba(0, 123, 255, 0.5);
+}
+
+footer {
+    color: #ffffff;
+    width: 100%;
+}
+
+.information{
+    color: #ffffff;
+    padding: 10px;
+}
+
+.footer{
+    font-family: "Sixtyfour Convergence", sans-serif;
+}
+
+footer a {
+    color: #ffffff;
+}
+
+footer a:hover {
+    color: #cd4614;
+}
+
+a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.lead{
+    font-weight: 500;
+}
+
+a:hover {
+    color: #cd4614;
+    text-shadow: 0px 0px 5px rgba(255, 61, 0, 0.5);
+}
+
+
+
