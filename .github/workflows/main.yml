@@ -28,8 +28,6 @@ jobs:
 
       # 4. Subir el contenido de `dist` a la rama `build`
       - name: Deploy to Build Branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Permite a GitHub Actions hacer push
         run: |
           git switch --orphan build  # Crea una rama `build` sin historial
           git reset --hard  # Elimina cualquier rastro anterior
