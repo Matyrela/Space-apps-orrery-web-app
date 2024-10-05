@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { CelestialBodyList } from './CelestialBodyList';
 
 export class CelestialBody {
     name: string;
@@ -37,6 +39,7 @@ export class CelestialBody {
         const material = new THREE.MeshBasicMaterial({map:this.texture, side: THREE.FrontSide}); // Color amarillo por defecto
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
+        CelestialBodyList.getInstance().addCelestialBody(this);
     }
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
