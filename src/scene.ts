@@ -24,6 +24,8 @@ import {Skybox} from "./objects/skybox";
 import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
 import {SimulatedTime} from "./objects/SimulatedTime";
+import { BehaviorSubject } from 'rxjs'
+import {Easing, Group, Tween} from '@tweenjs/tween.js'
 
 const CANVAS_ID = 'scene'
 
@@ -42,6 +44,15 @@ let pointLightHelper: PointLightHelper
 //let clock: Clock
 let stats: Stats
 let gui: GUI
+
+//TweenGroup
+const group = new Group();
+
+let selectedBody: BehaviorSubject<CelestialBody | null> = new BehaviorSubject(null);
+
+let searchBar: HTMLInputElement
+let similaritiesList: HTMLDivElement
+let similaritiesListObjects: HTMLDivElement
 
 let skybox: Skybox
 let celestialBodyList: CelestialBodyList
@@ -62,7 +73,63 @@ function init() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = PCFSoftShadowMap
-    scene = new Scene()
+    scene = new Scene();
+
+    searchBar = document.querySelector('input#body-search')!;
+    similaritiesList = document.querySelector('div#similarities')!;
+    similaritiesListObjects = document.querySelector('div#similarities-object')!;
+
+    similaritiesList.style.display = 'none';
+
+    function listAll(){
+      similaritiesList.style.display = 'block';
+      celestialBodyList.getCelestialBodies().forEach((body) => {
+        generateElements(body);
+      });
+    }
+
+    function generateElements(body: CelestialBody){
+      let bodyElement = document.createElement('a');
+      bodyElement.classList.add('dropdown-item');
+      bodyElement.innerHTML = body.getName();
+      if (bodyElement.innerHTML === selectedBody.getValue()?.getName()) {
+        bodyElement.classList.add('selected');
+      }
+      bodyElement.addEventListener('click', () => {
+        selectedBody.next(body);
+        similaritiesListObjects.innerHTML = '';
+        similaritiesList.style.display = 'none';
+      });
+      similaritiesListObjects.appendChild(bodyElement);
+    }
+
+    searchBar.addEventListener('focusout', () => {
+      // setTimeout(() => {
+      //   similaritiesList.style.display = 'none';
+      //   similaritiesListObjects.innerHTML = '';
+      // }, 250);
+    })
+
+    searchBar.addEventListener('focus', () => {
+      listAll();
+    });
+
+    searchBar.addEventListener('input', () => {
+      let query = searchBar.value;
+      if (query.length === 0) {
+        similaritiesListObjects.innerHTML = '';
+        listAll()
+        return
+      }
+
+      similaritiesList.style.display = 'block';
+      similaritiesListObjects.innerHTML = '';
+      celestialBodyList.getCelestialBodies().forEach((body) => {
+        if (body.getName().toLowerCase().includes(query.toLowerCase())) {
+          generateElements(body);
+        }
+      });
+    });
   }
 
   // ===== 👨🏻‍💼 LOADING MANAGER =====
@@ -153,7 +220,7 @@ function init() {
         1,
         '/blanco.png',
         1,
-        new Vector3(2, 3, 0),
+        new Vector3(1, 1, 1),
         new Vector3(0, 0, 0),
         earth,
         1,
@@ -173,7 +240,13 @@ function init() {
     cameraControls.autoRotate = false
     cameraControls.update()
 
-    cameraControls.addEventListener('change', () => {skybox.update();})
+    cameraControls.addEventListener('change', () => {
+      skybox.update();
+    })
+
+    selectedBody.subscribe((body) => {
+      goTo(cameraControls, body);
+    });
 
     // Full screen
     window.addEventListener('dblclick', (event) => {
@@ -207,7 +280,11 @@ function init() {
 
   // ==== 🐞 DEBUG GUI ====
   {
-    gui = new GUI({ title: '🐞 Debug GUI', width: 300 })
+    gui = new GUI({
+        title: '🐞 Debug GUI', width: 300,
+        autoPlace: false,
+    });
+      document.getElementById('gui-container')!.appendChild(gui.domElement);
 
     const lightsFolder = gui.addFolder('Lights')
     lightsFolder.add(pointLight, 'visible').name('point light')
@@ -247,6 +324,7 @@ function animate() {
   requestAnimationFrame(animate)
 
   stats.update()
+  group.update();
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement
@@ -264,6 +342,52 @@ function animate() {
   }
 
   cameraControls.update()
-
   renderer.render(scene, camera)
+}
+
+function goTo(cameraControls: OrbitControls, body: CelestialBody | null) {
+  if (body === null) {
+    return;
+  }
+
+  // Get the position of the celestial body and the camera's current position
+  const target = body.getPosition();
+  const currentTarget = cameraControls.target.clone();
+
+  let movementTween;
+
+  // Step 1: Smoothly move the cameraControls' target to the new position
+  const lookTween = new Tween(currentTarget)
+      .to(target, 1500) // Transition over 1 second
+      .easing(Easing.Quadratic.Out)
+      .onUpdate(() => {
+        // Update the camera's target position during the tween
+        cameraControls.target.copy(currentTarget);
+      })
+      .onComplete(() => {
+        cameraControls.target.copy(target);
+
+        const cameraPosition = cameraControls.object.position.clone();
+        const direction = new Vector3().subVectors(cameraPosition, target).normalize();
+
+        const newCameraPosition = target.clone().add(direction.multiplyScalar(body.getRadius() * 8));
+
+        movementTween = new Tween(cameraControls.object.position)
+            .to(
+                {
+                  x: newCameraPosition.x,
+                  y: newCameraPosition.y,
+                  z: newCameraPosition.z,
+                },
+                1500
+            )
+            .easing(Easing.Quadratic.Out)
+            .onUpdate(() => {
+              cameraControls.update(); // Update the controls each frame
+            })
+            .start();
+        group.add(movementTween);
+      })
+      .start();
+  group.add(lookTween);
 }

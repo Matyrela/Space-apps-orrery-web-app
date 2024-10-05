@@ -1,0 +1,52 @@
+name: Deploy to Build Branch
+
+on:
+  push:
+    branches:
+      - main  # Run the workflow on pushes to `main` branch
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # Required to push changes to the branch
+
+    steps:
+      # 1. Generate a GitHub App Token
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.VERSION_BUMPER_APPID }}  # App ID of the GitHub App
+          private-key: ${{ secrets.VERSION_BUMPER_SECRET }}  # Private Key of the GitHub App
+
+      # 2. Checkout the code using the GitHub App Token
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      # 3. Build the project
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+      # 4. Deploy `dist` to `build` branch
+      - name: Deploy to Build Branch
+        run: |
+          git config user.name "Gualter"
+          git config user.email "gualter@gualter.com"
+          git switch --orphan build
+          git reset --hard
+          cp -r dist/* .
+          git add .
+          git reset node_modules/
+          git reset dist/
+          git commit -m "Deploy to build branch"
+          git push -f origin build  # Force push to `build` branch
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}  # Use the App's GitHub token

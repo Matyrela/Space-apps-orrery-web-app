@@ -203,4 +203,16 @@ export class CelestialBody {
     updateMesh() {
         this.mesh.position.copy(this.position);
     }
+
+  getName() {
+    return this.name;
+  }
+
+  getPosition() {
+    return this.mesh.position;
+  }
+
+  getRadius() {
+    return this.radius;
+  }
 }
