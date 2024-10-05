@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { CelestialBodyList } from './CelestialBodyList';
+import {FrontSide} from 'three';
+import {CelestialBodyList} from './CelestialBodyList';
 import {Util} from "./Util";
-import {FrontSide} from "three";
 
 export class CelestialBody {
     name: string;
@@ -19,6 +19,9 @@ export class CelestialBody {
     ESTAR: number;
     longitudeOfPerihelion: number;
     longitudeOfAscendingNode: number;
+    excentricAnomalyE: number;
+    perihelion: number;
+    meanLongitude: number;
     inclination: number;
 
     constructor(
@@ -35,10 +38,11 @@ export class CelestialBody {
         e: number,
         longitudeOfPerihelion: number,
         longitudeOfAscendingNode: number,
+        meanLongitude: number,
         inclination: number,
         castShadow: boolean = false,
         emissive: number = 0x000000
-        ) {
+    ) {
         this.name = name;
         this.radius = radius;
         this.mass = mass;
@@ -56,6 +60,9 @@ export class CelestialBody {
         this.ESTAR = 57.29577951308232 * e;
         this.longitudeOfPerihelion = longitudeOfPerihelion;
         this.longitudeOfAscendingNode = longitudeOfAscendingNode;
+        this.excentricAnomalyE = 0;
+        this.perihelion = longitudeOfPerihelion - longitudeOfAscendingNode;
+        this.meanLongitude = meanLongitude;
         this.inclination = inclination;
 
         const geometry = new THREE.SphereGeometry(radius, 32, 32);
@@ -89,6 +96,7 @@ export class CelestialBody {
     update(date: Date) {
         // Aquí iría la actualización de la posición basándose en las ecuaciones de Kepler
         let vector = this.calculateOrbitPosition(date);
+
         console.log(vector);
 
         this.mesh.position.copy(vector);
@@ -96,60 +104,98 @@ export class CelestialBody {
 
     // Función de placeholder para las ecuaciones de Kepler
     calculateOrbitPosition(date: Date): THREE.Vector3 {
-        let x = this.radialDistance(date) * (Math.cos(this.longitudeOfAscendingNode)
-            * Math.cos(this.longitudeOfPerihelion + this.trueAnomaly(date)) - Math.sin(this.longitudeOfAscendingNode)
-            * Math.sin(this.longitudeOfPerihelion + this.trueAnomaly(date)) * Math.cos(this.inclination));
 
-        let y = this.radialDistance(date) * (this.longitudeOfAscendingNode * Math.cos(this.longitudeOfPerihelion + this.trueAnomaly(date))
-            + Math.cos(this.longitudeOfAscendingNode) * Math.sin(this.longitudeOfPerihelion + this.trueAnomaly(date)) * Math.cos(this.inclination));
+        let xOrbPlane = this.semiMajorAxis * (Math.cos(this.excentricAnomaly(date)) - this.e);
+        let yOrbPlane = this.semiMajorAxis * Math.sqrt(1 - Math.pow(this.e, 2)) * Math.sin(this.excentricAnomaly(date));
 
-        let z = this.radialDistance(date) * (Math.sin(this.longitudeOfPerihelion + this.trueAnomaly(date)) * Math.sin(this.inclination));
+        let xCart = xOrbPlane * (Math.cos(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.sin(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
+            + yOrbPlane * (-Math.sin(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.cos(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination));
 
-        return new THREE.Vector3(x, y, z);
+        let yCart = xOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.sin(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
+            + yOrbPlane * (-Math.sin(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.cos(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination));
+
+        let zCart = xOrbPlane * (Math.sin(this.perihelion) * Math.sin(this.inclination))
+            + yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination));
+
+        return new THREE.Vector3(xCart, zCart, yCart);
     }
 
     //T en segundos
     orbitalTime(): number {
         let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));
+        //console.log("ORBITAL TIME: " + Math.sqrt(t));
         return Math.sqrt(t);
     }
 
+    julianDate(date: Date): number {
+        let y = date.getUTCFullYear() + 8000;
+        let m = date.getUTCMonth();
+        let d = date.getUTCDate();
+
+        if (m < 3) {
+            y--;
+            m += 12;
+        }
+        let julianDate = (y * 365) + (y / 4) - (y / 100) + (y / 400) - 1200820 + (m * 153 + 3) / 5 - 92 + d - 1;
+        //console.log("JULIAN DATE: " + julianDate);
+        return julianDate;
+    }
+
+    getT(date: Date): number {
+        let JulianDate = this.julianDate(date);
+        console.log("T: " + (JulianDate - 2451545)/36525);
+        return (JulianDate - 2451545)/36525;
+    }
+
     //M en radianes
-    meanAnomaly(date: Date): number {
-        let meanAnomaly = (2 * Math.PI * this.calculateElapsedTime(this.t0)) / this.orbitalTime();
+    meanAnomaly(date): number {
+        let meanAnomaly = this.meanLongitude - this.longitudeOfPerihelion + Math.pow(this.getT(date), 2) * Math.cos(this.getT(date)) + Math.sin(this.getT(date));
+        console.log("MEAN ANOMALY: " + meanAnomaly);
         return meanAnomaly;
     }
 
     //E en radianes
     excentricAnomaly(date: Date): number {
         //e0
+        //console.log("ITERACION:")
         let en = this.meanAnomaly(date) + (this.ESTAR * Math.sin(this.meanAnomaly(date)));
-        while (Math.abs(this.calculateSumMeanAnomaly(date, en)) <= Util.TOL) {
+
+        while (Math.abs(this.calculateSumExcentricAnomaly(date, en)) <= Util.TOL) {
             en = en + (this.calculateSumExcentricAnomaly(date, en));
         }
+
+        console.log("EXCENTRIC ANOMALY: " + en);
         return en;
     }
 
     calculateElapsedTime(t0: Date) {
         let actualTime = new Date().getTime();
         let elapsedTime = actualTime - t0.getTime();
+        //console.log("ELAPSED TIME: " + elapsedTime / 1000);
         return elapsedTime / 1000;
     }
 
-    calculateSumMeanAnomaly(date: Date, En): number {
-        return this.meanAnomaly(date) - (En - (this.ESTAR * Math.sin(En)));
+    calculateSumMeanAnomaly(date: Date, En: number): number {
+        let sumMeanAnomaly = this.meanAnomaly(date) - (En - (this.ESTAR * Math.sin(En)));
+        //console.log("SUM MEAN ANOMALY: " + sumMeanAnomaly);
+        return sumMeanAnomaly;
     }
 
-    calculateSumExcentricAnomaly(date: Date, En): number {
+    calculateSumExcentricAnomaly(date: Date, En: number): number {
+        console.log("SUM EXCENTRIC ANOMALY: " + this.calculateSumMeanAnomaly(date, En) / (1 - (this.ESTAR * Math.cos(En))));
         return this.calculateSumMeanAnomaly(date, En) / (1 - (this.ESTAR * Math.cos(En)));
     }
 
-    trueAnomaly(date : Date): number {
-        let tan = Math.sqrt((1 + this.e) / (1 - this.e)) * Math.tan(this.excentricAnomaly(date) / 2);
+    trueAnomaly(date: Date): number {
+        let E = this.excentricAnomaly(date);
+        let tan = Math.sqrt((1 + this.e) / (1 - this.e)) * Math.tan(E / 2);
+
+        //console.log("TRUE ANOMALY: " + 2 * Math.atan(tan));
         return 2 * Math.atan(tan);
     }
 
-    radialDistance(date : Date): number {
+    radialDistance(date: Date): number {
+        //console.log("RADIAL DISTANCE: " + (this.semiMajorAxis * (1 - Math.pow(this.e, 2))) / (1 + this.e * Math.cos(this.trueAnomaly(date))));
         return (this.semiMajorAxis * (1 - Math.pow(this.e, 2))) / (1 + this.e * Math.cos(this.trueAnomaly(date)));
     }
 

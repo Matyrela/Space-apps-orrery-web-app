@@ -11,6 +11,11 @@ export class Util {
         return (y * 365) + (y / 4) - (y / 100) + (y / 400) - 1200820 + (m * 153 + 3) / 5 - 92 + d - 1;
     }
 
+    static dateToDay(date: Date): number {
+        // convertir fecha en dias incluyendo horas minutos y segundos
+        return date.getTime() / (1000 * 60 * 60 * 24);
+    }
+
     static SUNMASS = 1.989e30;
     static GRAVITATIONALCONSTANT = 6.67430e-11;
     static TOL = 1e-6;

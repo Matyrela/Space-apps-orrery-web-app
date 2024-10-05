@@ -23,6 +23,7 @@ import './style-map.css'
 import {Skybox} from "./objects/skybox";
 import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
+import {SimulatedTime} from "./objects/SimulatedTime";
 
 const CANVAS_ID = 'scene'
 
@@ -44,6 +45,9 @@ let gui: GUI
 
 let skybox: Skybox
 let celestialBodyList: CelestialBodyList
+
+let simulatedTime = new SimulatedTime();
+let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
 
 const animation = { enabled: true, play: true }
 
@@ -125,9 +129,9 @@ function init() {
 
     let earth = new CelestialBody(
         "Earth",
-        1,
+        0.1,
         5.972e24,
-        "/earth.png",
+        "/earthMap.png",
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
@@ -138,6 +142,7 @@ function init() {
         102.93005885,
         -5.11260389,
         -0.00054346,
+        100.46457166,
         true
     )
 
@@ -236,7 +241,9 @@ function init() {
   }
 }
 
+
 function animate() {
+
   requestAnimationFrame(animate)
 
   stats.update()
@@ -245,9 +252,14 @@ function animate() {
     const canvas = renderer.domElement
     camera.aspect = canvas.clientWidth / canvas.clientHeight
     camera.updateProjectionMatrix()
+    //cambiar
+    date = simulatedTime.getSimulatedTime(86400000);
+
+    console.log(date);
+
 
     CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
-        celestialBody.update(new Date())
+      celestialBody.update(date);
     })
   }
 
