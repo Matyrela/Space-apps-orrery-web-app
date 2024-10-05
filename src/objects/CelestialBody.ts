@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CelestialBodyList } from './CelestialBodyList';
+import {Util} from "./Util";
+import {FrontSide} from "three";
 
 export class CelestialBody {
     name: string;
@@ -12,6 +13,7 @@ export class CelestialBody {
     velocity: THREE.Vector3;  // Velocidad (puede ser opcional)
     mesh: THREE.Mesh;         // Representación visual en Three.js
     orbitCenter: CelestialBody | null;  // Centro alrededor del cual orbita, si aplica
+    semiMajorAxis: number;
 
     constructor(
         name: string,
@@ -21,8 +23,11 @@ export class CelestialBody {
         time: number,
         initialPosition: THREE.Vector3,
         initialVelocity: THREE.Vector3,
-        orbitCenter: CelestialBody | undefined
-    ) {
+        orbitCenter: CelestialBody | undefined,
+        a : number,
+        castShadow: boolean = false,
+        emissive: number = 0x000000)
+     {
         this.name = name;
         this.radius = radius;
         this.mass = mass;
@@ -34,30 +39,46 @@ export class CelestialBody {
         }else {
             this.orbitCenter = orbitCenter;
         }
+        this.semiMajorAxis = a;
+
         const geometry = new THREE.SphereGeometry(radius, 32, 32);
         if (typeof texture === 'string') {
             this.texture = new THREE.TextureLoader().load(texture);
         }else{
             this.texture = texture;
         }
-        const material = new THREE.MeshBasicMaterial({map:this.texture, side: THREE.FrontSide}); // Color amarillo por defecto
+
+        let material;
+
+        if (castShadow) {
+            material = new THREE.MeshLambertMaterial({
+                map: this.texture,
+                side: FrontSide,
+                emissive: emissive,
+                emissiveIntensity: 0.2
+            });
+        } else {
+            material = new THREE.MeshBasicMaterial({
+                map: this.texture,
+                side: FrontSide,
+            });
+        }
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
         CelestialBodyList.getInstance().addCelestialBody(this);
     }
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
-    update(deltaTime: number) {
+    update(date: Date) {
         // Aquí iría la actualización de la posición basándose en las ecuaciones de Kepler
-        const newPosition = this.calculateOrbitPosition(deltaTime);
+        const newPosition = this.calculateOrbitPosition(date);
         this.position.copy(newPosition);
         this.mesh.position.copy(this.position);
     }
 
     // Función de placeholder para las ecuaciones de Kepler
-    calculateOrbitPosition(deltaTime: number): THREE.Vector3 {
-        let dt = deltaTime;
-        // Parche temporal que devuelve la posición actual.
+    calculateOrbitPosition(date: Date): THREE.Vector3 {
+        let jd = Util.dateToJulianDate(date)
         // Aquí se implementarán las ecuaciones de Kepler.
 
         // Parámetros necesarios podrían ser (solo ejemplos):
@@ -69,6 +90,17 @@ export class CelestialBody {
         // Retornamos un vector 3D que representará la nueva posición
         return new THREE.Vector3(this.position.x, this.position.y, this.position.z);
     }
+
+    orbitalTime() : number {
+        let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));
+        return Math.sqrt(t);
+    }
+
+    meanAnomaly(date : Date) : number {
+        let jd = Util.dateToJulianDate(date);
+        return (jd - this.time) * (2 * Math.PI) / this.orbitalTime();
+    }
+
 
     // Método para actualizar el mesh visual
     updateMesh() {
