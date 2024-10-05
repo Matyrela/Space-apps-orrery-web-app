@@ -37,3 +37,88 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+
+
+/*
+    <label for="body-search">
+        Search for a celestial body
+    </label>
+    <input id="body-search">
+ */
+
+canvas {
+  height: 100%;
+  width: 100%;
+  outline: none;
+  background-color: #000;
+  pointer-events: auto; /* Allows the canvas to receive pointer events */
+}
+
+#gui-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 2; /* Ensure it is above other elements */
+}
+
+.over-canvas {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  z-index: 1;
+  pointer-events: none;
+
+  * {
+    pointer-events: all;
+  }
+}
+
+.similarities {
+  position: absolute;
+  width: 20rem;
+  top: 0;
+  right: 0;
+  padding: 0.5em;
+  z-index: 2;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border-radius: 0 0 0 1rem;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin: 0.5em 0;
+}
+
+.dropdown-item {
+    cursor: pointer;
+}
+
+.selected {
+  color: #01e7e7;
+}
+
+.search-bar{
+  display: flex;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+
+  width: 98%;
+}
+
+.similarities-title {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-bottom: 0.5em;
+}
+
+.similarities-list {
+  overflow-y: auto;
+  max-height: 87vh;
+  background: rgba(0,0,0,0.5);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 0.5em;
+}
