@@ -153,9 +153,9 @@ export class CelestialBody {
               var trueAnomaly = this.eccentricToTrueAnomaly(e, eA) 
               this.trueAnomalyS = trueAnomaly
 
-              var xCart = pos[0]*1000;
-              var yCart = pos[1]*1000;
-              var zCart = pos[2]*1000;
+              var xCart = pos[0]*Util.SIZE_SCALER;
+              var yCart = pos[1]*Util.SIZE_SCALER;
+              var zCart = pos[2]*Util.SIZE_SCALER;
             //console.log("ycart: " + yCart)
               return new THREE.Vector3(yCart, zCart, xCart);
             }
@@ -176,18 +176,24 @@ export class CelestialBody {
         var aN = this.longitudeOfAscendingNode ;                       // ascending Node
         var sLR = smA * (1 - oE^2) ;             // Compute Semi-Latus Rectum.
         var r = sLR/(1 + oE * Math.cos(theta));  // Compute radial distance.
-        
-        // Compute position coordinates pos[0] is x, pos[1] is y, pos[2] is z
-        pos[0] = r * (Math.cos(aP + theta) * Math.cos(aN) - Math.cos(oI) * Math.sin(aP + theta) * Math.sin(aN)) ;  
-        pos[1] = r * (Math.cos(aP + theta) * Math.sin(aN) + Math.cos(oI) * Math.sin(aP + theta) * Math.cos(aN)) ;
-        pos[2] = r * (Math.sin(aP + theta) * Math.sin(oI)) ;
-        //let xOrbPlane = r * Math.cos(this.trueAnomalyS); // x in orbital plane
-        //let yOrbPlane = r * Math.sin(this.trueAnomalyS); // y in orbital plane
-        //pos[0] = xOrbPlane * (Math.sin(this.perihelion) * Math.sin(this.inclination))
-        //+ yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination));
 
-        //console.log(pos)
-        
+        if (this.name != "Earth"){
+            // Compute position coordinates pos[0] is x, pos[1] is y, pos[2] is z
+            pos[0] = r * (Math.cos(aP + theta) * Math.cos(aN) - Math.cos(oI) * Math.sin(aP + theta) * Math.sin(aN)) ;
+            pos[1] = r * (Math.cos(aP + theta) * Math.sin(aN) + Math.cos(oI) * Math.sin(aP + theta) * Math.cos(aN)) ;
+            pos[2] = r * (Math.sin(aP + theta) * Math.sin(oI)) ;
+            //let xOrbPlane = r * Math.cos(this.trueAnomalyS); // x in orbital plane
+            //let yOrbPlane = r * Math.sin(this.trueAnomalyS); // y in orbital plane
+            //pos[0] = xOrbPlane * (Math.sin(this.perihelion) * Math.sin(this.inclination))
+            //+ yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination));
+
+            //console.log(pos)
+        } else {
+            pos[2] = r * (Math.cos(aP + theta) * Math.cos(aN) - Math.cos(oI) * Math.sin(aP + theta) * Math.sin(aN)) ;
+            pos[0] = r * (Math.cos(aP + theta) * Math.sin(aN) + Math.cos(oI) * Math.sin(aP + theta) * Math.cos(aN)) ;
+            pos[1] = r * (Math.sin(aP + theta) * Math.sin(oI)) ;
+        }
+
         return pos ;
         }
 

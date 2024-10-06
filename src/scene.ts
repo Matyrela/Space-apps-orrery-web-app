@@ -256,7 +256,7 @@ function init() {
       34.39644051,
       1.30439695,
       true
-    )
+    );
 
     let venus = new CelestialBody(
       "Venus",
@@ -275,22 +275,83 @@ function init() {
       181.97970850,
       3.39777545,
       true
-    )
-    /*
-    let pelota = new CelestialBody(
-        "Pelota",
-        0.5,
+    );
+
+    let saturn = new CelestialBody(
+        "Saturn",
+        58232,
+        5.683e26,
+        "saturnMap.jpg",
         1,
-        "blanco.png",
-        1,
-        new Vector3(1, 1, 1),
         new Vector3(0, 0, 0),
-        earth,
-        1,
-        new Date(Date.UTC(2000, 0, 3, 0, 0, 0)),
+        new Vector3(0, 0, 0),
+        null,
+        9.53667594,
+        new Date(Date.UTC(1944, 8, 7, 0, 0, 0)),
+        0.05386179,
+        92.59887831,
+        113.66242448,
+        49.95424423,
+        2.48599187,
         true
-    )
-    */
+        );
+
+    let mercury = new CelestialBody(
+        "Mercury",
+        2440,
+        3.285e23,
+        "mercuryMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        0.38709927,
+        new Date(Date.UTC(2021, 3, 27, 0, 0, 0)),
+        0.20563593,
+        77.45779628,
+        48.33076593,
+        252.25032350,
+        7.00497902,
+        true
+    );
+
+    let uranus = new CelestialBody(
+        "Uranus",
+        25362,
+        8.681e25,
+        "uranusMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        19.18916464,
+        new Date(Date.UTC(1966, 5, 2, 0, 0, 0)),
+        0.04725744,
+        170.95427630,
+        74.01692503,
+        313.23810451,
+        0.77263783,
+        true
+    );
+
+    let neptune = new CelestialBody(
+        "Neptune",
+        24622,
+        1.024e26,
+        "neptuneMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        30.06992276,
+        new Date(Date.UTC(2042, 8, 15, 0, 0, 0)),
+        0.00859048,
+        44.96476227,
+        131.78422574,
+        -55.12002969,
+        1.77004347,
+        true
+    );
 
     scene.add(...celestialBodyList.getMeshes());
   }
