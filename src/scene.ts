@@ -59,7 +59,7 @@ let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
 let newDate = new Date();
 //Global Variables
 let epoch = new Date(Date.now());  // start the calendar 
-let simSpeed = 1;
+let simSpeed = 1/2592000;
 let distanceFromCamera = 0;
 
 //a revisar
