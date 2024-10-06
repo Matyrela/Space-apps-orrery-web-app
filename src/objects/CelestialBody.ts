@@ -102,11 +102,9 @@ export class CelestialBody {
     // Función de actualización del cuerpo celeste, a invocar cada frame
     update(date: Date, simSpeed : number) {
         // Aquí iría la actualización de la posición basándose en las ecuaciones de Kepler
-        let vector = this.calculateOrbitPosition(date, simSpeed);
+            let vector = this.calculateOrbitPosition(date, simSpeed);
+            this.mesh.position.copy(vector);
 
-        console.log(vector);
-
-        this.mesh.position.copy(vector);
     }
 
     // Función de placeholder para las ecuaciones de Kepler

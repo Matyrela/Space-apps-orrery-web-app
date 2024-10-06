@@ -1,7 +1,10 @@
 import GUI from 'lil-gui'
+import CameraControls from 'camera-controls';
+import * as THREE from 'three';
+
 import {
   AmbientLight,
-  AxesHelper,
+  AxesHelper, Clock,
   GridHelper,
   LoadingManager,
   Mesh,
@@ -15,7 +18,6 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three'
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import {toggleFullScreen} from './helpers/fullscreen'
 import {resizeRendererToDisplaySize} from './helpers/responsiveness'
@@ -24,11 +26,9 @@ import {Skybox} from "./objects/skybox";
 import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
 import {SimulatedTime} from "./objects/SimulatedTime";
-import { BehaviorSubject } from 'rxjs'
-import {Easing, Group, Tween} from '@tweenjs/tween.js'
-const baseUrl = import.meta.env.MODE === 'production'
-    ? '/Space-apps-orrery-web-app/'
-    : '/';
+import {BehaviorSubject} from 'rxjs'
+
+CameraControls.install({THREE: THREE});
 
 const CANVAS_ID = 'scene'
 
@@ -41,17 +41,15 @@ let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 let pointLight: PointLight
 let camera: PerspectiveCamera
-let cameraControls: OrbitControls
+let cameraControls: CameraControls;
 let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
-//let clock: Clock
+let clock: Clock
 let stats: Stats
 let gui: GUI
 
-//TweenGroup
-const group = new Group();
-
 let selectedBody: BehaviorSubject<CelestialBody | null> = new BehaviorSubject(null);
+let selectedBodyFullyTransitioned: boolean = false;
 
 let searchBar: HTMLInputElement
 let similaritiesList: HTMLDivElement
@@ -64,10 +62,8 @@ let simulatedTime = new SimulatedTime();
 let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
 let newDate = new Date();
 //Global Variables
-let epoch = new Date(Date.now());  // start the calendar 
-let simSpeed = 1 ;
-
-const animation = { enabled: true, play: true }
+let epoch = new Date(Date.now());  // start the calendar
+let simSpeed = 1;
 
 init()
 animate()
@@ -77,7 +73,7 @@ function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
     canvas = document.querySelector(`canvas#${CANVAS_ID}`)!
-    renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
+    renderer = new WebGLRenderer({canvas, antialias: true, alpha: true})
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = PCFSoftShadowMap
@@ -89,14 +85,14 @@ function init() {
 
     similaritiesList.style.display = 'none';
 
-    function listAll(){
+    function listAll() {
       similaritiesList.style.display = 'block';
       celestialBodyList.getCelestialBodies().forEach((body) => {
         generateElements(body);
       });
     }
 
-    function generateElements(body: CelestialBody){
+    function generateElements(body: CelestialBody) {
       let bodyElement = document.createElement('a');
       bodyElement.classList.add('dropdown-item');
       bodyElement.innerHTML = body.getName();
@@ -112,10 +108,10 @@ function init() {
     }
 
     searchBar.addEventListener('focusout', () => {
-      // setTimeout(() => {
-      //   similaritiesList.style.display = 'none';
-      //   similaritiesListObjects.innerHTML = '';
-      // }, 250);
+      setTimeout(() => {
+        similaritiesList.style.display = 'none';
+        similaritiesListObjects.innerHTML = '';
+      }, 250);
     })
 
     searchBar.addEventListener('focus', () => {
@@ -178,6 +174,12 @@ function init() {
   {
     camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, renderSize * 8)
     camera.position.set(2, 2, 5)
+
+    cameraControls = new CameraControls(camera, renderer.domElement);
+    cameraControls.dampingFactor = 0.1; // Optional: Enable smooth damping
+    cameraControls.draggingDampingFactor = 0.3;
+    cameraControls.verticalDragToForward = true; // Optional: Enable panning
+
   }
 
   // ===== 📦 OBJECTS =====
@@ -197,7 +199,7 @@ function init() {
     scene.add(plane)
 
 
-    skybox = new Skybox(0,0,0, renderSize/2, camera);
+    skybox = new Skybox(0, 0, 0, renderSize / 2, camera);
     scene.add(...skybox.getMesh());
 
     celestialBodyList = CelestialBodyList.getInstance();
@@ -367,18 +369,23 @@ function init() {
 
   // ===== 🕹️ CONTROLS =====
   {
-    cameraControls = new OrbitControls(camera, canvas)
-    cameraControls.target = new Vector3(0, 0, 0)
-    cameraControls.enableDamping = true
-    cameraControls.autoRotate = false
-    cameraControls.update()
-
-    cameraControls.addEventListener('change', () => {
+    cameraControls.addEventListener('update', () => {
       skybox.update();
     })
 
-    selectedBody.subscribe((body) => {
-      goTo(cameraControls, body);
+    selectedBody.subscribe(async (body) => {
+      selectedBodyFullyTransitioned = false;
+
+      if (!body) return;
+
+      cameraControls.setPosition(
+          body.getPosition().x,
+          body.getPosition().y,
+          body.getPosition().z,
+          true
+      )
+
+      selectedBodyFullyTransitioned = true;
     });
 
     // Full screen
@@ -406,7 +413,7 @@ function init() {
 
   // ===== 📈 STATS & CLOCK =====
   {
-    //clock = new Clock()
+    clock = new Clock()
     stats = new Stats()
     document.body.appendChild(stats.dom)
   }
@@ -414,10 +421,10 @@ function init() {
   // ==== 🐞 DEBUG GUI ====
   {
     gui = new GUI({
-        title: '🐞 Debug GUI', width: 300,
-        autoPlace: false,
+      title: '🐞 Debug GUI', width: 300,
+      autoPlace: false,
     });
-      document.getElementById('gui-container')!.appendChild(gui.domElement);
+    document.getElementById('gui-container')!.appendChild(gui.domElement);
 
     const lightsFolder = gui.addFolder('Lights')
     lightsFolder.add(pointLight, 'visible').name('point light')
@@ -445,7 +452,7 @@ function init() {
       localStorage.removeItem('guiState')
       gui.reset()
     }
-    gui.add({ resetGui }, 'resetGui').name('RESET')
+    gui.add({resetGui}, 'resetGui').name('RESET')
 
     gui.close()
   }
@@ -460,96 +467,60 @@ function traceOrbits() {
 }
 
 function animate() {
-  requestAnimationFrame(animate)
+  requestAnimationFrame(animate);
 
-  stats.update()
-  group.update();
+  const delta = clock.getDelta();
+  stats.update();
 
-  date = simulatedTime.getSimulatedTime(86400000);
+  date = simulatedTime.getSimulatedTime(500000);
 
-   //cambiar
-    date = simulatedTime.getSimulatedTime(500000);
+  // Actualizar los cuerpos celestes
+  updateTheDate();
 
-    console.log(epoch);
+  CelestialBodyList.getInstance().getCelestialBodies().forEach((celestialBody) => {
+    celestialBody.update(epoch, simSpeed);
+  });
 
-
-    CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
-      celestialBody.update(epoch, simSpeed);
-      if(celestialBody.name == "Venus"){
-        //console.log("Vector Venus: " + celestialBody.getPosition().toArray())
-      }
-    })
-    updateTheDate();
-
-  if (resizeRendererToDisplaySize(renderer)) {
-    const canvas = renderer.domElement
-    camera.aspect = canvas.clientWidth / canvas.clientHeight
-    camera.updateProjectionMatrix()
-
-   
+  if (selectedBody.getValue() !== null && selectedBodyFullyTransitioned) {
+    cameraControls.moveTo(
+        selectedBody.getValue().getPosition().x,
+        selectedBody.getValue().getPosition().y,
+        selectedBody.getValue().getPosition().z,
+        false
+    )
+    cameraControls.setTarget(
+          selectedBody.getValue().getPosition().x,
+          selectedBody.getValue().getPosition().y,
+          selectedBody.getValue().getPosition().z,
+          false
+      )
 
   }
 
-  cameraControls.update()
-  renderer.render(scene, camera)
+
+  cameraControls.update(delta);
+
+  // Redimensionar si es necesario
+  if (resizeRendererToDisplaySize(renderer)) {
+    const canvas = renderer.domElement;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
+  }
+
+  // Renderizar la escena
+  renderer.render(scene, camera);
 }
 
-function updateTheDate() 
-  { 
+function updateTheDate() {
   if (simSpeed == 1) {
-      epoch = new Date(Date.now());            // At maximum speed, increment calendar by a day for each clock-cycle.
+    epoch = new Date(Date.now());            // At maximum speed, increment calendar by a day for each clock-cycle.
   } else if (0 > simSpeed) {
-      epoch.setDate(epoch.getDate() - simSpeed * 24 * 3600000)
-  } else if (simSpeed == 0){
-      epoch.setDate(Date.now());
-  } else {  epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000) ; }  // 24 hours * milliseconds in an hour * simSpeed 
-    
+    epoch.setDate(epoch.getDate() - simSpeed * 24 * 3600000)
+  } else if (simSpeed == 0) {
+    epoch.setDate(Date.now());
+  } else {
+    epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000);
+  }  // 24 hours * milliseconds in an hour * simSpeed
+
   //	 document.getElementById("modelDate").innerHTML = (epoch.getMonth() + 1) + "-" + epoch.getDate() + "-" + epoch.getFullYear() ;
-  }
-
-function goTo(cameraControls: OrbitControls, body: CelestialBody | null) {
-  if (body === null) {
-    return;
-  }
-
-  // Get the position of the celestial body and the camera's current position
-  const target = body.getPosition();
-  const currentTarget = cameraControls.target.clone();
-
-  let movementTween;
-
-  // Step 1: Smoothly move the cameraControls' target to the new position
-  const lookTween = new Tween(currentTarget)
-      .to(target, 1500) // Transition over 1 second
-      .easing(Easing.Quadratic.Out)
-      .onUpdate(() => {
-        // Update the camera's target position during the tween
-        cameraControls.target.copy(currentTarget);
-      })
-      .onComplete(() => {
-        cameraControls.target.copy(target);
-
-        const cameraPosition = cameraControls.object.position.clone();
-        const direction = new Vector3().subVectors(cameraPosition, target).normalize();
-
-        const newCameraPosition = target.clone().add(direction.multiplyScalar(body.getRadius() * 8));
-
-        movementTween = new Tween(cameraControls.object.position)
-            .to(
-                {
-                  x: newCameraPosition.x,
-                  y: newCameraPosition.y,
-                  z: newCameraPosition.z,
-                },
-                1500
-            )
-            .easing(Easing.Quadratic.Out)
-            .onUpdate(() => {
-              cameraControls.update(); // Update the controls each frame
-            })
-            .start();
-        group.add(movementTween);
-      })
-      .start();
-  group.add(lookTween);
 }
