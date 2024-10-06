@@ -10,6 +10,10 @@
   <body>
 
     <div class="over-canvas">
+      <div class="current-time">
+        <p id="current-time-text"></p>
+      </div>
+
       <div class="similarities">
         <input id="body-search" class="search-bar" placeholder="Search for a celestial body" />
         <div id="similarities">
@@ -17,6 +21,11 @@
           <hr>
           <div class="similarities-list" id="similarities-object"></div>
         </div>
+      </div>
+
+      <div class="time-slider">
+        <p id="time-scale">x1</p>
+        <input type="range" id="time-slider" min="0" max="100" value="50" class="slider" />
       </div>
     </div>
 

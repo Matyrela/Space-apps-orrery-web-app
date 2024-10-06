@@ -109,9 +109,7 @@ export class CelestialBody {
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
     update(date: Date, simSpeed : number, distanceFromCamera : number) {
-        
         let vector = this.calculateOrbitPosition(date, simSpeed);
-        console.log(vector);
 
          // Tamaño base del marcador
         const baseSize = 1;
