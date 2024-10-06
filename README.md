@@ -1,7 +1,7 @@
-# NASA Space Apps Challenge 2024 - Project: **NeoNavigator Orrery**
+# NASA Space Apps Challenge 2024 - Project: **NeoNavigator**
 
 ## Project Overview
-Welcome to **NeoNavigator Orrery**, a web application designed to help children and youths explore the solar system and near-Earth objects (NEOs) interactively. This project was developed as part of the NASA Space Apps Challenge 2024 by Team **Amigos Socketes**.
+Welcome to **NeoNavigator**, a web application designed to help children and youths explore the solar system and near-Earth objects (NEOs) interactively. This project was developed as part of the NASA Space Apps Challenge 2024 by Team **Amigos Socketes**.
 
 Explore the solar system with real-time data from NASA's API and learn more about planets, asteroids, and comets in a fun and engaging way!
 
