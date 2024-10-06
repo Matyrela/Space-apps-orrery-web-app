@@ -137,7 +137,7 @@ hr {
 }
 
 .current-time{
-    animation: fadeOut 500ms 2s forwards;
+    animation: fadeOut 500ms 4s forwards;
     pointer-events: none;
     * {
         pointer-events: none;
@@ -149,14 +149,11 @@ hr {
     100% {opacity: 0;}
 }
 
-/*
-    time slider bottom left
 
-      <div class="time-slider">
-        <p>x1</p>
-        <input type="range" id="time-slider" min="0" max="100" value="50" class="slider" />
-      </div>
- */
+@keyframes fadeIn {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
 
 .time-slider {
     position: absolute;
@@ -176,8 +173,62 @@ hr {
     font-weight: 600;
 }
 
-  .slider{
+.slider{
     width: 100%;
     height: 1.5em;
     margin-top: 0.5em;
-  }
+}
+
+#resources {
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#resources h1 {
+    font-size: 2em;
+    margin: 0;
+}
+
+#resources h2 {
+    font-size: 1.5em;
+    margin: 0;
+}
+
+#progress-bar {
+    width: 50%;
+    height: 2em;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-radius: 0.5em;
+    margin-top: 1em;
+    position: relative;
+}
+
+#percentage-loading {
+    height: 100%;
+    background-color: #01e7e7;
+    border-radius: 0.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#percentage-loading h3 {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    color: #000;
+    margin: 0;
+}
+
+#percentage {
+    margin-top: 0.5em;
+    font-size: 1.2em;
+}

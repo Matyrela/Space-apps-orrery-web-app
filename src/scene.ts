@@ -63,12 +63,75 @@ let simSpeed = 1;
 let simSpeedPrint = 0;
 let distanceFromCamera = 0;
 
-//a revisar
-const animation = {enabled: true, play: true}
 
-init()
-animate()
-traceOrbits()
+loadingManager = new LoadingManager();
+
+loadingManager.onStart = (url, itemsLoaded, itemsTotal) => {
+  console.log('🔄 Comenzando la carga de recursos...');
+};
+
+loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+  let percentage = Math.floor((itemsLoaded / itemsTotal) * 100);
+  document.querySelector("p#percentage")!.textContent = `${percentage}%`;
+  // @ts-ignore
+  document.querySelector("div#percentage-loading").style.width = `${percentage}%`;
+  document.querySelector("h3#current-resource").textContent = url;
+  console.log(`📥 Cargando recurso: ${url} -> ${itemsLoaded} / ${itemsTotal}`);
+};
+
+
+
+loadingManager.onLoad = () => {
+  console.log('✅ ¡Todos los recursos cargados! Iniciando la escena...');
+  init();
+  animate()
+  traceOrbits()
+
+  // @ts-ignore
+  document.querySelector("div#over-canvas").style.animation = 'fadeIn 1s forwards';
+  // @ts-ignore
+  document.querySelector("div#resources").style.animation = 'fadeOut 1s forwards';
+  setTimeout(() => {
+    // @ts-ignore
+    document.querySelector("div#resources").style.display = 'none';
+  }, 1000);
+};
+
+loadingManager.onError = (url) => {
+  console.log(`❌ Error cargando: ${url}`);
+};
+
+const textureLoader = new THREE.TextureLoader(loadingManager);
+let textures = [
+  "blanco.png",
+  "earthMap.png",
+  "galaxy.png",
+  "JupiterMap.jpg",
+  "logo.png",
+  "lunasGenericasMap.jpg",
+  "marsMap.jpg",
+  "mercuryMap.jpg",
+  "moon.jpg",
+  "neptuneMap.jpg",
+  "PIA00342~medium.jpg",
+  "rings.jpg",
+  "rings2.jpg",
+  "roundearth.png",
+  "saturnMap.jpg",
+  "saturnRingsMap.png",
+  "skybox.png",
+  "space-background.webp",
+  "sun.jpg",
+  "uranusMap.jpg",
+  "venusMap.jpg",
+];
+
+textures.forEach(texture => {
+  textureLoader.load(`${texture}`);
+});
+
+
+
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
@@ -85,33 +148,34 @@ function init() {
     similaritiesListObjects = document.querySelector('div#similarities-object')!;
     dateText = document.querySelector('p#current-time-text')!;
     inputDate = document.querySelector('input#time-slider')!;
-    timeScaleText = document.querySelector('p#time-scale')
+    timeScaleText = document.querySelector('p#time-scale');
 
     dateText.textContent = epoch.toDateString();
 
     inputDate.addEventListener('input', () => {
       simulatedTime();
-      if (celestialBodyList){
+      if (celestialBodyList) {
         celestialBodyList.getCelestialBodies().forEach(celestialBody => {
           celestialBody.setRotationSpeed(celestialBody.getRotationSpeed() * simSpeedAbs * 2592000 * 1.2);
         });
       }
     });
 
-    function simulatedTime(){
+    function simulatedTime() {
       let value = Number(inputDate.value);
       value = value - 50;
       if (value < 0) {
         simSpeed = -simSpeedAbs * Math.pow(2, -value / 2);
         simSpeedPrint = -simSpeedAbs * Math.pow(2, value / 2) * 40;
-      }else{
+      } else {
         simSpeed = simSpeedAbs * Math.pow(2, value / 2);
         simSpeedPrint = simSpeedAbs * Math.pow(2, value / 2) * 40;
       }
-      
+
       timeScaleText.innerHTML = simSpeedPrint.toFixed(2).toString() + " days / sec";
       console.log(simSpeed)
     }
+
     simulatedTime();
 
     similaritiesList.style.display = 'none';
@@ -165,25 +229,6 @@ function init() {
         }
       });
     });
-  }
-
-  // ===== 👨🏻‍💼 LOADING MANAGER =====
-  {
-    loadingManager = new LoadingManager()
-
-    loadingManager.onStart = () => {
-      console.log('loading started')
-    }
-    loadingManager.onProgress = (url, loaded, total) => {
-      console.log('loading in progress:')
-      console.log(`${url} -> ${loaded} / ${total}`)
-    }
-    loadingManager.onLoad = () => {
-      console.log('loaded!')
-    }
-    loadingManager.onError = () => {
-      console.log('❌ error while loading')
-    }
   }
 
   // ===== 💡 LIGHTS =====

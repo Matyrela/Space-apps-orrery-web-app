@@ -8,8 +8,19 @@
     <link rel="stylesheet" href="/src/style-map.css" />
   </head>
   <body>
+  <div id="resources">
+    <img src="logo.png">
+    <h1>Loading resources...</h1>
+    <h2>This may take a while</h2>
+    <div id="progress-bar">
+      <div id="percentage-loading" style="width: 0%">
+        <h3 id="current-resource"></h3>
+      </div>
+    </div>
+    <p id="percentage">0%</p>
+  </div>
 
-    <div class="over-canvas">
+    <div class="over-canvas" id="over-canvas" style="opacity: 0">
       <div class="current-time">
         <p id="current-time-text"></p>
       </div>
