@@ -26,6 +26,8 @@ export class CelestialBody {
     period: number;
     trueAnomalyS: number;
     orbitColor: THREE.ColorRepresentation;
+    marker: THREE.Mesh;
+
 
     constructor(
         name: string,
@@ -96,17 +98,30 @@ export class CelestialBody {
         }
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
+
+        const markerGeometry = new THREE.SphereGeometry(10, 16, 16);  
+        const markerMaterial = new THREE.MeshBasicMaterial({ color: orbitColor, transparent: true, opacity: 0.5 });
+        this.marker = new THREE.Mesh(markerGeometry, markerMaterial);
+        this.marker.position.copy(this.position); 
+
         CelestialBodyList.getInstance().addCelestialBody(this);
     }
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
-    update(date: Date, simSpeed : number) {
+    update(date: Date, simSpeed : number, distanceFromCamera : number) {
         // Aquí iría la actualización de la posición basándose en las ecuaciones de Kepler
         let vector = this.calculateOrbitPosition(date, simSpeed);
-
         console.log(vector);
 
+         // Tamaño base del marcador
+        const baseSize = 1; // Puedes ajustar este valor según lo que desees
+
+        // Calcular el tamaño del marcador en función de la distancia
+        const scaleFactor = baseSize * (distanceFromCamera / 1000);
+        this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
         this.mesh.position.copy(vector);
+        this.marker.position.copy(vector);
     }
 
     // Función de placeholder para las ecuaciones de Kepler
@@ -224,6 +239,19 @@ export class CelestialBody {
         
             return line;  // Return the line if you want to add it to the scene later
         }
+
+        addPlanetMarker(pos: THREE.Vector3): THREE.Mesh {
+            // Create a sphere to represent the planet's position
+            let sphereGeometry = new THREE.SphereGeometry(100, 32, 32);  // Small dot with radius 0.5
+            let sphereMaterial = new THREE.MeshBasicMaterial({ color: this.orbitColor, transparent: true, opacity: 0.5 });  // Same color, semi-transparent
+        
+            // Create the sphere mesh and position it at the planet's current coordinates
+            let planetMarker = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            planetMarker.position.set(pos[0], pos[1], pos[2]);
+
+            return planetMarker;
+        }
+    
     //T en segundos
     orbitalTime(): number {
         let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));

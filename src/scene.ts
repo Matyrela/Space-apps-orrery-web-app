@@ -66,6 +66,7 @@ let newDate = new Date();
 //Global Variables
 let epoch = new Date(Date.now());  // start the calendar 
 let simSpeed = 1 ;
+let distanceFromCamera = 0;
 
 const animation = { enabled: true, play: true }
 
@@ -363,6 +364,13 @@ function init() {
     );
 
     scene.add(...celestialBodyList.getMeshes());
+    let bodyList = celestialBodyList.getCelestialBodies();
+    for (let body of bodyList) {
+      // Asegúrate de que 'marker' es una propiedad del objeto 'body'
+      if (body.marker) {
+        scene.add(body.marker);
+      }
+    }
   }
 
   // ===== 🕹️ CONTROLS =====
@@ -474,10 +482,8 @@ function animate() {
 
 
     CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
-      celestialBody.update(epoch, simSpeed);
-      if(celestialBody.name == "Venus"){
-        //console.log("Vector Venus: " + celestialBody.getPosition().toArray())
-      }
+      distanceFromCamera = camera.position.distanceTo(celestialBody.marker.position);
+      celestialBody.update(epoch, simSpeed, distanceFromCamera);
     })
     updateTheDate();
 
@@ -504,7 +510,6 @@ function updateTheDate()
       epoch.setDate(Date.now());
   } else {  epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000) ; }  // 24 hours * milliseconds in an hour * simSpeed 
     
-  //	 document.getElementById("modelDate").innerHTML = (epoch.getMonth() + 1) + "-" + epoch.getDate() + "-" + epoch.getFullYear() ;
   }
 
 function goTo(cameraControls: OrbitControls, body: CelestialBody | null) {
