@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import {NEO} from "./Neo";
+import { NEO } from "./Neo";
 
 export class Util {
   static dateToJulianDate(date: Date): number {
@@ -32,7 +32,7 @@ export class Util {
         skipEmptyLines: true,
         delimiter: ";",
         complete: function (results) {
-          resolve(results.data);
+          resolve(results.data as NEO[]);
         },
         error: function (error) {
           reject(error);
