@@ -8,6 +8,19 @@
     <link rel="stylesheet" href="/src/style-map.css" />
   </head>
   <body>
+
+    <div class="over-canvas">
+      <div class="similarities">
+        <input id="body-search" class="search-bar" placeholder="Search for a celestial body" />
+        <div id="similarities">
+          <div class="similarities-title">Similarities</div>
+          <hr>
+          <div class="similarities-list" id="similarities-object"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="gui-container"></div>
     <canvas id="scene"></canvas>
     <script type="module" src="/src/scene.ts"></script>
   </body>

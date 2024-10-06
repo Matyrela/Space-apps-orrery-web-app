@@ -1,36 +1,34 @@
 import GUI from 'lil-gui'
+import CameraControls from 'camera-controls';
+import * as THREE from 'three';
 import {
   AmbientLight,
-  AxesHelper, Color,
-  //Clock,
-  GridHelper,
+  AxesHelper,
+  Clock,
   LoadingManager,
-  Mesh,
-  MeshLambertMaterial,
-  MeshStandardMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
-  PlaneGeometry,
   PointLight,
   PointLightHelper,
-  Scene, Texture, Vector3,
-  WebGLRenderer,
-} from 'three'
-import { DragControls } from 'three/examples/jsm/controls/DragControls'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+  Scene,
+  Vector3,
+  WebGLRenderer
+} from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module'
-import { toggleFullScreen } from './helpers/fullscreen'
-import { resizeRendererToDisplaySize } from './helpers/responsiveness'
+import {toggleFullScreen} from './helpers/fullscreen'
+import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style-map.css'
 import {Skybox} from "./objects/skybox";
 import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
-import {texture} from "three/src/nodes/accessors/TextureNode";
-import {color} from "three/src/nodes/tsl/TSLCore";
+import {SimulatedTime} from "./objects/SimulatedTime";
+import {BehaviorSubject} from 'rxjs'
+
+CameraControls.install({THREE: THREE});
 
 const CANVAS_ID = 'scene'
 
-const renderSize = 100000
+const renderSize = 100000 * 256
 
 let canvas: HTMLElement
 let renderer: WebGLRenderer
@@ -38,33 +36,102 @@ let scene: Scene
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 let pointLight: PointLight
-let cube: Mesh
 let camera: PerspectiveCamera
-let cameraControls: OrbitControls
-let dragControls: DragControls
+let cameraControls: CameraControls;
 let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
-//let clock: Clock
+let clock: Clock
 let stats: Stats
 let gui: GUI
+
+let selectedBody: BehaviorSubject<CelestialBody | null> = new BehaviorSubject(null);
+let selectedBodyFullyTransitioned: boolean = false;
+
+let orbitLines = []
+
+let searchBar: HTMLInputElement
+let similaritiesList: HTMLDivElement
+let similaritiesListObjects: HTMLDivElement
 
 let skybox: Skybox
 let celestialBodyList: CelestialBodyList
 
-const animation = { enabled: true, play: true }
+let simulatedTime = new SimulatedTime();
+let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
+let newDate = new Date();
+//Global Variables
+let epoch = new Date(Date.now());  // start the calendar
+let simSpeed = 1;
 
 init()
 animate()
+traceOrbits()
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
     canvas = document.querySelector(`canvas#${CANVAS_ID}`)!
-    renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
+    renderer = new WebGLRenderer({canvas, antialias: true, alpha: true})
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = PCFSoftShadowMap
-    scene = new Scene()
+    scene = new Scene();
+
+    searchBar = document.querySelector('input#body-search')!;
+    similaritiesList = document.querySelector('div#similarities')!;
+    similaritiesListObjects = document.querySelector('div#similarities-object')!;
+
+    similaritiesList.style.display = 'none';
+
+    function listAll() {
+      similaritiesList.style.display = 'block';
+      celestialBodyList.getCelestialBodies().forEach((body) => {
+        generateElements(body);
+      });
+    }
+
+    function generateElements(body: CelestialBody) {
+      let bodyElement = document.createElement('a');
+      bodyElement.classList.add('dropdown-item');
+      bodyElement.innerHTML = body.getName();
+      if (bodyElement.innerHTML === selectedBody.getValue()?.getName()) {
+        bodyElement.classList.add('selected');
+      }
+      bodyElement.addEventListener('click', () => {
+        selectedBody.next(body);
+        similaritiesListObjects.innerHTML = '';
+        similaritiesList.style.display = 'none';
+      });
+      similaritiesListObjects.appendChild(bodyElement);
+    }
+
+    searchBar.addEventListener('focusout', () => {
+      setTimeout(() => {
+        similaritiesList.style.display = 'none';
+        similaritiesListObjects.innerHTML = '';
+      }, 250);
+    })
+
+    searchBar.addEventListener('focus', () => {
+      listAll();
+    });
+
+    searchBar.addEventListener('input', () => {
+      let query = searchBar.value;
+      if (query.length === 0) {
+        similaritiesListObjects.innerHTML = '';
+        listAll()
+        return
+      }
+
+      similaritiesList.style.display = 'block';
+      similaritiesListObjects.innerHTML = '';
+      celestialBodyList.getCelestialBodies().forEach((body) => {
+        if (body.getName().toLowerCase().includes(query.toLowerCase())) {
+          generateElements(body);
+        }
+      });
+    });
   }
 
   // ===== 👨🏻‍💼 LOADING MANAGER =====
@@ -88,15 +155,16 @@ function init() {
 
   // ===== 💡 LIGHTS =====
   {
-    ambientLight = new AmbientLight('white', 0.4)
-    pointLight = new PointLight('white', 20, 100)
-    pointLight.position.set(-2, 2, 2)
+    ambientLight = new AmbientLight('white', 0.05)
+    pointLight = new PointLight('white', 2.5, renderSize * 8)
+    pointLight.position.set(0, 0, 0)
     pointLight.castShadow = true
     pointLight.shadow.radius = 4
     pointLight.shadow.camera.near = 0.5
     pointLight.shadow.camera.far = 4000
     pointLight.shadow.mapSize.width = 2048
     pointLight.shadow.mapSize.height = 2048
+    pointLight.decay = 0;
     scene.add(ambientLight)
     scene.add(pointLight)
   }
@@ -105,93 +173,246 @@ function init() {
   {
     camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, renderSize * 8)
     camera.position.set(2, 2, 5)
+
+    cameraControls = new CameraControls(camera, renderer.domElement);
+    cameraControls.dampingFactor = 0.1; // Optional: Enable smooth damping
+    cameraControls.draggingDampingFactor = 0.3;
+    cameraControls.verticalDragToForward = true; // Optional: Enable panning
+
   }
 
   // ===== 📦 OBJECTS =====
   {
-    const planeGeometry = new PlaneGeometry(3, 3)
-    const planeMaterial = new MeshLambertMaterial({
-      color: 'gray',
-      emissive: 'teal',
-      emissiveIntensity: 0.2,
-      side: 2,
-      transparent: true,
-      opacity: 0.4,
-    })
-    const plane = new Mesh(planeGeometry, planeMaterial)
-    plane.rotateX(Math.PI / 2)
-    plane.receiveShadow = true
-    scene.add(plane)
-
-
-    skybox = new Skybox(0,0,0, renderSize/2, camera);
+    skybox = new Skybox(0, 0, 0, renderSize / 2, camera);
     scene.add(...skybox.getMesh());
+
+    skybox.galaxyVisible.subscribe((bool) => {
+      celestialBodyList.getCelestialBodies().forEach((body) => {
+        body.mesh.visible = !bool;
+        body.traceOrbits()
+      })
+
+      if (bool) {
+        orbitLines.forEach((line) => {
+          scene.remove(line);
+        });
+      }else{
+        orbitLines.forEach((line) => {
+          scene.add(line);
+        });
+      }
+    });
 
     celestialBodyList = CelestialBodyList.getInstance();
 
+    let sun = new CelestialBody(
+        "Sun",
+        696340,
+        1.989e30,
+        'sun.jpg',
+        1,
+        new Vector3(1, 1, 1),
+        new Vector3(0, 0, 0),
+        null,
+        0,
+        new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0xFDB813,
+        false
+    );
+
     let earth = new CelestialBody(
         "Earth",
-        1,
-        1,
-        "/earth.png",
+        6378,
+        5.972e24,
+        "earthMap.png",
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        undefined
+        null,
+        1.00000018,
+        new Date(Date.UTC(2024, 1, 4, 0, 0, 0)),
+        0.01673163,
+        102.93005885,
+        -5.11260389,
+        100.46691572,
+        -0.00054346,
+        0x22ABDF,
+        true
     )
 
-    let pelota = new CelestialBody(
-        "Pelota",
-        0.5,
-        1,
-        '/blanco.png',
-        1,
-        new Vector3(2, 3, 0),
-        new Vector3(0, 0, 0),
-        undefined
+    let mars = new CelestialBody(
+      "Mars",
+      3389.5,
+      6.39e23,
+      "marsMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      null,
+      1.52371034,
+      new Date(Date.UTC(2000, 0, 1, 0, 0 ,0)),
+      0.09339410,
+      -23.94362959,
+      49.55953891,
+      -4.55343205,
+      1.84969142,
+      0xFF5E33,
+      true
     )
+
+    let jupiter = new CelestialBody(
+      "Jupiter",
+      69911,
+      1.898e27,
+      "JupiterMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      null,
+      5.20288700,
+      new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
+      0.04838624,
+      14.72847983,
+      100.47390909,
+      34.39644051,
+      1.30439695,
+      0xA2440A,
+      true
+    );
+
+    let venus = new CelestialBody(
+      "Venus",
+      6051.8,
+      4.867e24,
+      "venusMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      null,
+      0.72332102,
+      new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
+      0.00676399,
+      131.76755713,
+      76.67261496,
+      181.97970850,
+      3.39777545,
+      0xD8B712,
+      true
+    );
+
+    let saturn = new CelestialBody(
+        "Saturn",
+        58232,
+        5.683e26,
+        "saturnMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        9.53667594,
+        new Date(Date.UTC(1944, 8, 7, 0, 0, 0)),
+        0.05386179,
+        92.59887831,
+        113.66242448,
+        49.95424423,
+        2.48599187,
+        0xF6D624,
+        true
+        );
+
+    let mercury = new CelestialBody(
+        "Mercury",
+        2440,
+        3.285e23,
+        "mercuryMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        0.38709927,
+        new Date(Date.UTC(2021, 3, 27, 0, 0, 0)),
+        0.20563593,
+        77.45779628,
+        48.33076593,
+        252.25032350,
+        7.00497902,
+        0xA195A8,
+        true
+    );
+
+    let uranus = new CelestialBody(
+        "Uranus",
+        25362,
+        8.681e25,
+        "uranusMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        19.18916464,
+        new Date(Date.UTC(1966, 5, 2, 0, 0, 0)),
+        0.04725744,
+        170.95427630,
+        74.01692503,
+        313.23810451,
+        0.77263783,
+        0x949AFF,
+        true
+    );
+
+    let neptune = new CelestialBody(
+        "Neptune",
+        24622,
+        1.024e26,
+        "neptuneMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        30.06992276,
+        new Date(Date.UTC(2042, 8, 15, 0, 0, 0)),
+        0.00859048,
+        44.96476227,
+        131.78422574,
+        -55.12002969,
+        1.77004347,
+        0x3339FF,
+        true
+    );
 
     scene.add(...celestialBodyList.getMeshes());
   }
 
   // ===== 🕹️ CONTROLS =====
   {
-    cameraControls = new OrbitControls(camera, canvas)
-    cameraControls.target = new Vector3(0, 0, 0)
-    cameraControls.enableDamping = true
-    cameraControls.autoRotate = false
-    cameraControls.update()
+    cameraControls.addEventListener('update', () => {
+      let distance = camera.position.distanceTo(new Vector3(0, 0, 0))
+      if (distance < renderSize * 0.9) {
+        skybox.showGalaxy(false)
+      } else {
+        skybox.showGalaxy(true)
+      }
+    })
 
-    dragControls = new DragControls([cube], camera, renderer.domElement)
-    dragControls.addEventListener('hoveron', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('orange')
-    })
-    dragControls.addEventListener('hoveroff', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('black')
-    })
-    dragControls.addEventListener('dragstart', (event) => {
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      cameraControls.enabled = false
-      animation.play = false
-      material.emissive.set('black')
-      material.opacity = 0.7
-      material.needsUpdate = true
-    })
-    dragControls.addEventListener('dragend', (event) => {
-      cameraControls.enabled = true
-      animation.play = true
-      const mesh = event.object as Mesh
-      const material = mesh.material as MeshStandardMaterial
-      material.emissive.set('black')
-      material.opacity = 1
-      material.needsUpdate = true
-    })
-    dragControls.enabled = false
+    selectedBody.subscribe(async (body) => {
+      selectedBodyFullyTransitioned = false;
+
+      if (!body) return;
+
+      cameraControls.setPosition(
+          body.getPosition().x,
+          body.getPosition().y,
+          body.getPosition().z,
+          true
+      )
+
+      selectedBodyFullyTransitioned = true;
+    });
 
     // Full screen
     window.addEventListener('dblclick', (event) => {
@@ -210,22 +431,22 @@ function init() {
     pointLightHelper = new PointLightHelper(pointLight, undefined, 'orange')
     pointLightHelper.visible = false
     scene.add(pointLightHelper)
-
-    const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
-    gridHelper.position.y = -0.01
-    scene.add(gridHelper)
   }
 
   // ===== 📈 STATS & CLOCK =====
   {
-    //clock = new Clock()
+    clock = new Clock()
     stats = new Stats()
     document.body.appendChild(stats.dom)
   }
 
   // ==== 🐞 DEBUG GUI ====
   {
-    gui = new GUI({ title: '🐞 Debug GUI', width: 300 })
+    gui = new GUI({
+      title: '🐞 Debug GUI', width: 300,
+      autoPlace: false,
+    });
+    document.getElementById('gui-container')!.appendChild(gui.domElement);
 
     const lightsFolder = gui.addFolder('Lights')
     lightsFolder.add(pointLight, 'visible').name('point light')
@@ -253,29 +474,74 @@ function init() {
       localStorage.removeItem('guiState')
       gui.reset()
     }
-    gui.add({ resetGui }, 'resetGui').name('RESET')
+    gui.add({resetGui}, 'resetGui').name('RESET')
 
     gui.close()
   }
 }
 
+function traceOrbits() {
+  CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
+    let line = celestialBody.traceOrbits();
+    orbitLines.push(line);
+  })
+}
+
 function animate() {
-  requestAnimationFrame(animate)
+  requestAnimationFrame(animate);
 
-  stats.update()
+  const delta = clock.getDelta();
+  stats.update();
 
-  if (resizeRendererToDisplaySize(renderer)) {
-    const canvas = renderer.domElement
-    camera.aspect = canvas.clientWidth / canvas.clientHeight
-    camera.updateProjectionMatrix()
+  date = simulatedTime.getSimulatedTime(500000);
 
-    //BORRAR
-    skybox.update();
+  // Actualizar los cuerpos celestes
+  updateTheDate();
 
+  CelestialBodyList.getInstance().getCelestialBodies().forEach((celestialBody) => {
+    celestialBody.update(epoch, simSpeed);
+  });
+
+  if (selectedBody.getValue() !== null && selectedBodyFullyTransitioned) {
+    cameraControls.moveTo(
+        selectedBody.getValue().getPosition().x,
+        selectedBody.getValue().getPosition().y,
+        selectedBody.getValue().getPosition().z,
+        false
+    )
+    cameraControls.setTarget(
+          selectedBody.getValue().getPosition().x,
+          selectedBody.getValue().getPosition().y,
+          selectedBody.getValue().getPosition().z,
+          false
+      )
 
   }
 
-  cameraControls.update()
 
-  renderer.render(scene, camera)
+  cameraControls.update(delta);
+
+  // Redimensionar si es necesario
+  if (resizeRendererToDisplaySize(renderer)) {
+    const canvas = renderer.domElement;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
+  }
+
+  // Renderizar la escena
+  renderer.render(scene, camera);
+}
+
+function updateTheDate() {
+  if (simSpeed == 1) {
+    epoch = new Date(Date.now());            // At maximum speed, increment calendar by a day for each clock-cycle.
+  } else if (0 > simSpeed) {
+    epoch.setDate(epoch.getDate() - simSpeed * 24 * 3600000)
+  } else if (simSpeed == 0) {
+    epoch.setDate(Date.now());
+  } else {
+    epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000);
+  }  // 24 hours * milliseconds in an hour * simSpeed
+
+  //	 document.getElementById("modelDate").innerHTML = (epoch.getMonth() + 1) + "-" + epoch.getDate() + "-" + epoch.getFullYear() ;
 }

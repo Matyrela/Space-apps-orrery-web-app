@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import {Vector3} from "three";
+import {BehaviorSubject} from "rxjs";
 
 export class Skybox {
     private skyboxGeometry: THREE.SphereGeometry
@@ -10,9 +11,9 @@ export class Skybox {
     private galaxyMaterial: THREE.MeshBasicMaterial
     private galaxyMesh: THREE.Mesh
 
-    private camera: THREE.Camera
+    galaxyVisible: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
 
-    private swapDistance: number;
+    private camera: THREE.Camera
 
     constructor(
         x: number=0,
@@ -23,7 +24,7 @@ export class Skybox {
     ) {
         this.skyboxGeometry = new THREE.SphereGeometry(radius, 32, 32)
         this.skyboxMaterial = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('/skybox.png'),
+            map: new THREE.TextureLoader().load("skybox.png"),
             side: THREE.BackSide,
             transparent: false,
         })
@@ -33,7 +34,7 @@ export class Skybox {
 
         this.galaxyGeometry = new THREE.PlaneGeometry(radius*8, radius*8)
         this.galaxyMaterial = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('/galaxy.png'),
+            map: new THREE.TextureLoader().load("galaxy.png"),
             side: THREE.DoubleSide,
             transparent: false,
             opacity: 1,
@@ -43,21 +44,18 @@ export class Skybox {
 
         this.camera = camera
 
-        this.swapDistance = radius * 0.9;
+        this.showGalaxy(false);
     }
 
     getMesh(): THREE.Mesh[] {
         return [this.skyboxMesh, this.galaxyMesh]
     }
 
-    update() {
-        let distance = this.camera.position.distanceTo(new Vector3(0, 0, 0))
-        if (distance < this.swapDistance) {
-            this.skyboxMesh.visible = true
-            this.galaxyMesh.visible = false
-        } else {
-            this.skyboxMesh.visible = false
-            this.galaxyMesh.visible = true
-        }
+    showGalaxy(bool: boolean) {
+        this.galaxyVisible.next(bool)
+
+        this.galaxyMesh.visible = bool
+        this.skyboxMesh.visible = !bool
+
     }
 }
