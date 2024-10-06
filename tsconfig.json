@@ -16,6 +16,6 @@
     "noImplicitReturns": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "index.html", "map.html"],
+  "include": ["src/**/*", "*.html",],
   "exclude": ["node_modules", "build"]
 }
