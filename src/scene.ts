@@ -26,6 +26,9 @@ import {CelestialBody} from "./objects/CelestialBody";
 import {SimulatedTime} from "./objects/SimulatedTime";
 import { BehaviorSubject } from 'rxjs'
 import {Easing, Group, Tween} from '@tweenjs/tween.js'
+const baseUrl = import.meta.env.MODE === 'production'
+    ? '/Space-apps-orrery-web-app/'
+    : '/';
 
 const CANVAS_ID = 'scene'
 
@@ -202,7 +205,7 @@ function init() {
         "Earth",
         0.1,
         5.972e24,
-        "/earthMap.png",
+        "earthMap.png",
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
@@ -222,7 +225,7 @@ function init() {
         "Pelota",
         0.5,
         1,
-        '/blanco.png',
+        "blanco.png",
         1,
         new Vector3(1, 1, 1),
         new Vector3(0, 0, 0),
@@ -324,17 +327,14 @@ function init() {
 
 
 function animate() {
-
   requestAnimationFrame(animate)
 
   stats.update()
   group.update();
 
-  if (resizeRendererToDisplaySize(renderer)) {
-    const canvas = renderer.domElement
-    camera.aspect = canvas.clientWidth / canvas.clientHeight
-    camera.updateProjectionMatrix()
-    //cambiar
+  date = simulatedTime.getSimulatedTime(86400000);
+
+   //cambiar
     date = simulatedTime.getSimulatedTime(500000);
 
     console.log(epoch);
@@ -344,6 +344,14 @@ function animate() {
       celestialBody.update(epoch, simSpeed);
     })
     updateTheDate();
+
+  if (resizeRendererToDisplaySize(renderer)) {
+    const canvas = renderer.domElement
+    camera.aspect = canvas.clientWidth / canvas.clientHeight
+    camera.updateProjectionMatrix()
+
+   
+
   }
 
   cameraControls.update()
