@@ -323,26 +323,21 @@ function init() {
 
 
 function animate() {
-  console.log("Animate function called"); // Add this line
-
   requestAnimationFrame(animate)
 
   stats.update()
   group.update();
 
+  date = simulatedTime.getSimulatedTime(86400000);
+
+  CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
+    celestialBody.update(date);
+  })
+
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement
     camera.aspect = canvas.clientWidth / canvas.clientHeight
     camera.updateProjectionMatrix()
-    //cambiar
-    date = simulatedTime.getSimulatedTime(86400000);
-
-    console.log(date);
-
-
-    CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
-      celestialBody.update(date);
-    })
   }
 
   cameraControls.update()
