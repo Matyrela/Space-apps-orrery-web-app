@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {
   AmbientLight,
   AxesHelper,
-  Clock,
+  Clock, Euler,
   LoadingManager,
   PCFSoftShadowMap,
   PerspectiveCamera,
@@ -234,7 +234,6 @@ function init() {
         1,
         new Vector3(1, 1, 1),
         new Vector3(0, 0, 0),
-        null,
         0,
         new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
         0,
@@ -243,6 +242,7 @@ function init() {
         0,
         0,
         0xFDB813,
+        100,
         false
     );
 
@@ -254,7 +254,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         1.00000018,
         new Date(Date.UTC(2024, 1, 4, 0, 0, 0)),
         0.01673163,
@@ -263,7 +262,11 @@ function init() {
         100.46691572,
         -0.00054346,
         0x22ABDF,
-        true
+        460,
+        true,
+
+
+
     )
 
     let mars = new CelestialBody(
@@ -274,7 +277,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         1.52371034,
         new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
         0.09339410,
@@ -283,6 +285,7 @@ function init() {
         -4.55343205,
         1.84969142,
         0xFF5E33,
+        100,
         true
     )
 
@@ -294,7 +297,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         5.20288700,
         new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
         0.04838624,
@@ -303,6 +305,7 @@ function init() {
         34.39644051,
         1.30439695,
         0xA2440A,
+        100,
         true
     );
 
@@ -314,7 +317,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         0.72332102,
         new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
         0.00676399,
@@ -323,6 +325,7 @@ function init() {
         181.97970850,
         3.39777545,
         0xD8B712,
+        100,
         true
     );
 
@@ -334,7 +337,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         9.53667594,
         new Date(Date.UTC(1944, 8, 7, 0, 0, 0)),
         0.05386179,
@@ -344,12 +346,13 @@ function init() {
         2.48599187,
         0xF6D624,
         true,
-        0x000000,
         {
           ringTexture: "rings2.jpg",
           innerRadiusMult: 1.2,
           outerRadiusMult: 2.0
         } as IRing
+        100,
+        true
     );
 
     let mercury = new CelestialBody(
@@ -360,7 +363,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         0.38709927,
         new Date(Date.UTC(2021, 3, 27, 0, 0, 0)),
         0.20563593,
@@ -369,6 +371,7 @@ function init() {
         252.25032350,
         7.00497902,
         0xA195A8,
+        100,
         true
     );
 
@@ -380,7 +383,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         19.18916464,
         new Date(Date.UTC(1966, 5, 2, 0, 0, 0)),
         0.04725744,
@@ -389,6 +391,7 @@ function init() {
         313.23810451,
         0.77263783,
         0x949AFF,
+        100,
         true
     );
 
@@ -400,7 +403,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         30.06992276,
         new Date(Date.UTC(2042, 8, 15, 0, 0, 0)),
         0.00859048,
@@ -409,6 +411,7 @@ function init() {
         -55.12002969,
         1.77004347,
         0x3339FF,
+        100,
         true
     );
 

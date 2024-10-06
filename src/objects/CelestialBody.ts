@@ -12,7 +12,6 @@ export class CelestialBody {
     position: THREE.Vector3;  // Posición en el espacio (x, y, z)
     velocity: THREE.Vector3;  // Velocidad (puede ser opcional)
     mesh: THREE.Mesh;         // Representación visual en Three.js
-    orbitCenter: CelestialBody | null;  // Centro alrededor del cual orbita, si aplica
     semiMajorAxis: number;
     t0: Date;
     e: number;
@@ -27,6 +26,7 @@ export class CelestialBody {
     trueAnomalyS: number;
     orbitColor: THREE.ColorRepresentation;
     marker: THREE.Mesh;
+    rotationBySecond: number;
     ringMesh: THREE.Mesh | undefined;
 
 
@@ -38,7 +38,6 @@ export class CelestialBody {
         time: number,
         initialPosition: THREE.Vector3,
         initialVelocity: THREE.Vector3,
-        orbitCenter: CelestialBody | undefined,
         a: number,
         t0: Date,
         e: number,
@@ -47,8 +46,8 @@ export class CelestialBody {
         meanLongitude: number,
         inclination: number,
         orbitColor: THREE.ColorRepresentation,
-        castShadow: boolean = false,
-        emissive: number = 0x000000,
+        rotation: number,
+        castShadow: boolean = false
         ring: IRing | undefined = undefined
     ) {
         this.name = name;
@@ -57,11 +56,6 @@ export class CelestialBody {
         this.time = time;
         this.position = initialPosition;
         this.velocity = initialVelocity;
-        if (orbitCenter === undefined) {
-            this.orbitCenter = null;
-        } else {
-            this.orbitCenter = orbitCenter;
-        }
         this.semiMajorAxis = a;
         this.t0 = t0;
         this.e = e;
@@ -75,6 +69,8 @@ export class CelestialBody {
         this.period = Math.sqrt(Math.pow(this.semiMajorAxis, 3));
         this.trueAnomalyS = 0;
         this.orbitColor = orbitColor;
+        this.rotationBySecond = rotation;
+        console.log(rotation)
 
         const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
         if (typeof texture === 'string') {
@@ -89,7 +85,6 @@ export class CelestialBody {
             material = new THREE.MeshLambertMaterial({
                 map: this.texture,
                 side: FrontSide,
-                emissive: emissive,
                 emissiveIntensity: 0.2
             });
         } else {
@@ -150,11 +145,15 @@ export class CelestialBody {
             return;
         }
         this.marker.position.copy(vector);
-
+        
         this.mesh.position.copy(vector);
         if (this.ringMesh !== undefined){
             this.mesh.children[0].position.copy( new Vector3(vector.x, vector.y, vector.z));
         }
+
+        console.log(this.mesh.rotation.y)
+        console.log(this.rotationBySecond)
+        this.mesh.rotation.y += this.rotationBySecond;
     }
     // Función de placeholder para las ecuaciones de Kepler
     calculateOrbitPosition(date: Date , simSpeed : number): THREE.Vector3 {
