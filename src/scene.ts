@@ -57,8 +57,10 @@ let skybox: Skybox
 let celestialBodyList: CelestialBodyList
 
 //Global Variables
-let epoch = new Date(Date.now());  // start the calendar
+let epoch = new Date(Date.now());  // start the calendar 
+let simSpeedAbs = 1/2592000;
 let simSpeed = 1;
+let simSpeedPrint = 0;
 let distanceFromCamera = 0;
 
 //a revisar
@@ -88,17 +90,25 @@ function init() {
     dateText.textContent = epoch.toDateString();
 
     inputDate.addEventListener('input', () => {
+      simulatedTime();
+
+    });
+
+    function simulatedTime(){
       let value = Number(inputDate.value);
       value = value - 50;
       if (value < 0) {
-        simSpeed = -Math.pow(2, -value / 10);
+        simSpeed = -simSpeedAbs * Math.pow(2, -value / 2);
+        simSpeedPrint = -simSpeedAbs * Math.pow(2, value / 2) * 40;
       }else{
-        simSpeed = Math.pow(2, value / 10);
+        simSpeed = simSpeedAbs * Math.pow(2, value / 2);
+        simSpeedPrint = simSpeedAbs * Math.pow(2, value / 2) * 40;
       }
-      timeScaleText.innerHTML = simSpeed.toFixed(2).toString() + "X";
+      
+      timeScaleText.innerHTML = simSpeedPrint.toFixed(2).toString() + " days / sec";
       console.log(simSpeed)
-    });
-
+    }
+    simulatedTime();
 
     similaritiesList.style.display = 'none';
 
@@ -418,7 +428,6 @@ function init() {
     scene.add(...celestialBodyList.getMeshes());
     let bodyList = celestialBodyList.getCelestialBodies();
     for (let body of bodyList) {
-      // Asegúrate de que 'marker' es una propiedad del objeto 'body'
       if (body.marker) {
         scene.add(body.marker);
       }
