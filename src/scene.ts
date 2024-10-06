@@ -21,7 +21,7 @@ import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
 import {SimulatedTime} from "./objects/SimulatedTime";
 import {BehaviorSubject} from 'rxjs'
-import {Util} from './objects/Util';
+import {IRing, Util} from './objects/Util';
 
 CameraControls.install({THREE: THREE});
 
@@ -324,7 +324,13 @@ function init() {
         49.95424423,
         2.48599187,
         0xF6D624,
-        true
+        true,
+        0x000000,
+        {
+          ringTexture: "rings2.jpg",
+          innerRadiusMult: 1.2,
+          outerRadiusMult: 2.0
+        } as IRing
     );
 
     let mercury = new CelestialBody(

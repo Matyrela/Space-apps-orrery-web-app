@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import {FrontSide} from 'three';
+import {FrontSide, Vector3} from 'three';
 import {CelestialBodyList} from './CelestialBodyList';
-import {Util} from "./Util";
+import {IRing, Util} from "./Util";
 
 export class CelestialBody {
     name: string;
@@ -27,6 +27,7 @@ export class CelestialBody {
     trueAnomalyS: number;
     orbitColor: THREE.ColorRepresentation;
     marker: THREE.Mesh;
+    ringMesh: THREE.Mesh | undefined;
 
 
     constructor(
@@ -47,7 +48,8 @@ export class CelestialBody {
         inclination: number,
         orbitColor: THREE.ColorRepresentation,
         castShadow: boolean = false,
-        emissive: number = 0x000000
+        emissive: number = 0x000000,
+        ring: IRing | undefined = undefined
     ) {
         this.name = name;
         this.radius = Util.KmtoAU(radius)*10000;
@@ -99,17 +101,39 @@ export class CelestialBody {
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
 
-        const markerGeometry = new THREE.SphereGeometry(10, 16, 16);  
+        const markerGeometry = new THREE.SphereGeometry(10, 16, 16);
         const markerMaterial = new THREE.MeshBasicMaterial({ color: orbitColor, transparent: true, opacity: 0.5 });
         this.marker = new THREE.Mesh(markerGeometry, markerMaterial);
-        this.marker.position.copy(this.position); 
+        this.marker.position.copy(this.position);
 
+        CelestialBodyList.getInstance().addCelestialBody(this);
+
+        if (ring !== undefined) {
+            let ringGeometry = new THREE.RingGeometry(this.radius * ring.innerRadiusMult, this.radius * ring.outerRadiusMult, 32);
+            let ringMaterial = new THREE.MeshBasicMaterial({
+                map: new THREE.TextureLoader().load(ring.ringTexture),
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5
+            });
+            let ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+            ringMesh.rotation.x = Math.PI / 2;
+            ringMesh.position.copy(this.position);
+
+            ringMesh.castShadow = true;
+            ringMesh.receiveShadow = true;
+
+            this.ringMesh = ringMesh;
+            ringMesh.receiveShadow = true;
+
+            this.mesh.children.push(ringMesh);
+        }
         CelestialBodyList.getInstance().addCelestialBody(this);
     }
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
     update(date: Date, simSpeed : number, distanceFromCamera : number) {
-        
+
         let vector = this.calculateOrbitPosition(date, simSpeed);
         console.log(vector);
 
@@ -126,10 +150,12 @@ export class CelestialBody {
             return;
         }
         this.marker.position.copy(vector);
-        
-        this.mesh.position.copy(vector);
-    }
 
+        this.mesh.position.copy(vector);
+        if (this.ringMesh !== undefined){
+            this.mesh.children[0].position.copy( new Vector3(vector.x, vector.y, vector.z));
+        }
+    }
     // Función de placeholder para las ecuaciones de Kepler
     calculateOrbitPosition(date: Date , simSpeed : number): THREE.Vector3 {
 
@@ -154,27 +180,27 @@ export class CelestialBody {
 
             var currentPosition = [] ;
             var deltaTime = 0 ;
-                
+
            // Calculate mean motion n:
                var n = (2 * Math.PI) / (this.period * 365.25) ;   // radians per day
-               
+
            // Calculate Eccentric Anomaly E based on the orbital eccentricity and previous true anomaly:
               var e = this.e ;
-              var f = this.trueAnomalyS;         
+              var f = this.trueAnomalyS;
               var eA = this.trueToEccentricAnomaly(e,f)            // convert from true anomaly to eccentric anomaly
-              
-           // Calculate current Mean Anomaly	
-              var m0 = eA - e * Math.sin(eA);	
-             
+
+           // Calculate current Mean Anomaly
+              var m0 = eA - e * Math.sin(eA);
+
               deltaTime = simSpeed * n
-      
+
            // Update Mean anomaly by adding the Mean Anomaly at Epoch to the mean motion * delaTime
                var mA = deltaTime + m0
-              
+
               this.time = this.time +  deltaTime // increment timer
-      
-              eA = this.eccentricAnomaly (e, mA) 
-              var trueAnomaly = this.eccentricToTrueAnomaly(e, eA) 
+
+              eA = this.eccentricAnomaly (e, mA)
+              var trueAnomaly = this.eccentricToTrueAnomaly(e, eA)
               this.trueAnomalyS = trueAnomaly
 
               var xCart = pos[0]*Util.SIZE_SCALER;
@@ -184,7 +210,7 @@ export class CelestialBody {
               return new THREE.Vector3(yCart, zCart, xCart);
             }
 
-        
+
 
 
     propagate(uA){
@@ -212,7 +238,7 @@ export class CelestialBody {
 
         return pos ;
         }
-    
+
         traceOrbits() {
             // Generate line segments from points around the trajectory of the orbiting objects.
             // Use BufferGeometry for creating the line geometry
@@ -220,26 +246,26 @@ export class CelestialBody {
             const material = new THREE.LineBasicMaterial({ color: this.orbitColor });
             const orbPos = [];
             let i = 0.0;
-        
+
             // Loop to propagate the orbit positions
             while (i <= Math.PI * 2) {
                 const pos = this.propagate(i);  // Propagate the orbit to get the position
-        
+
                 orbPos.push(new THREE.Vector3(pos[1]*Util.SIZE_SCALER, pos[2]*Util.SIZE_SCALER, pos[0]*Util.SIZE_SCALER));
-        
+
                 i += 0.001;  // Increment the orbit angle
             }
-            
-           
+
+
             // Set the vertices array to the BufferGeometry
             geometry.setFromPoints(orbPos);
-        
+
             // Create the line object for the orbit trace
             const line = new THREE.Line(geometry, material);
-        
+
             const orbitName = this.name + "_trace";
             line.name = orbitName;
-        
+
             return line;  // Return the line if you want to add it to the scene later
         }
 
@@ -247,14 +273,14 @@ export class CelestialBody {
             // Create a sphere to represent the planet's position
             let sphereGeometry = new THREE.SphereGeometry(100, 32, 32);  // Small dot with radius 0.5
             let sphereMaterial = new THREE.MeshBasicMaterial({ color: this.orbitColor, transparent: true, opacity: 0.5 });  // Same color, semi-transparent
-        
+
             // Create the sphere mesh and position it at the planet's current coordinates
             let planetMarker = new THREE.Mesh(sphereGeometry, sphereMaterial);
             planetMarker.position.set(pos[0], pos[1], pos[2]);
 
             return planetMarker;
         }
-    
+
     //T en segundos
     orbitalTime(): number {
         let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));
@@ -324,7 +350,7 @@ export class CelestialBody {
     trueToEccentricAnomaly(e,f) {
         // http://mmae.iit.edu/~mpeet/Classes/MMAE441/Spacecraft/441Lecture19.pdf slide 7 
         var eccentricAnomaly = 2* Math.atan(Math.sqrt((1-e)/(1+e))* Math.tan(f/2));
-            
+
         return eccentricAnomaly ;
     }
 
@@ -333,8 +359,8 @@ export class CelestialBody {
         var trueAnomaly = 2 * Math.atan(Math.sqrt((1+e)/(1-e))* Math.tan(E/2));
         return trueAnomaly
     }
-    
-    
+
+
     calculateElapsedTime(t0: Date) {
         let actualTime = new Date().getTime();
         let elapsedTime = actualTime - t0.getTime();
@@ -372,4 +398,3 @@ export class CelestialBody {
     return this.radius;
   }
 }
-
