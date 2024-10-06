@@ -91,7 +91,11 @@ function init() {
 
     inputDate.addEventListener('input', () => {
       simulatedTime();
-
+      if (celestialBodyList){
+        celestialBodyList.getCelestialBodies().forEach(celestialBody => {
+          celestialBody.setRotationSpeed(celestialBody.getRotationSpeed() * simSpeedAbs * 2592000 * 1.2);
+        });
+      }
     });
 
     function simulatedTime(){
@@ -252,7 +256,8 @@ function init() {
         0,
         0,
         0xFDB813,
-        100,
+        0.000072921158553,
+        new Euler(0, 0, 0, 'XYZ'),
         false
     );
 
@@ -272,11 +277,9 @@ function init() {
         100.46691572,
         -0.00054346,
         0x22ABDF,
-        460,
-        true,
-
-
-
+        0.000072921158553,
+        new Euler(0.4396, 0.8641, 5.869, "XYZ"),
+        true
     )
 
     let mars = new CelestialBody(
@@ -295,7 +298,8 @@ function init() {
         -4.55343205,
         1.84969142,
         0xFF5E33,
-        100,
+        0.00007088222,
+        new Euler(0.4396, 0.8641, 5.869, "XYZ"),
         true
     )
 
@@ -315,7 +319,8 @@ function init() {
         34.39644051,
         1.30439695,
         0xA2440A,
-        100,
+        0.00017538081,
+        new Euler(0.0545, 1.7541, 0.2575, "XYZ"),
         true
     );
 
@@ -335,7 +340,8 @@ function init() {
         181.97970850,
         3.39777545,
         0xD8B712,
-        100,
+        0.0000002994132,
+        new Euler(3.0960, 1.3383, 0.9578, "XYZ"),
         true
     );
 
@@ -355,14 +361,14 @@ function init() {
         49.95424423,
         2.48599187,
         0xF6D624,
+        0.00016329833,
+        new Euler(0.4665, 1.9839, 0.4574, "XYZ"),
         true,
         {
           ringTexture: "rings2.jpg",
           innerRadiusMult: 1.2,
           outerRadiusMult: 2.0
         } as IRing
-        100,
-        true
     );
 
     let mercury = new CelestialBody(
@@ -381,7 +387,8 @@ function init() {
         252.25032350,
         7.00497902,
         0xA195A8,
-        100,
+        0.00000123854412,
+        new Euler(0.000593, 0.844493, 0.852917, "XYZ"),
         true
     );
 
@@ -401,7 +408,8 @@ function init() {
         313.23810451,
         0.77263783,
         0x949AFF,
-        100,
+        -0.00010104518,
+        new Euler(1.7074, 1.2915, 2.9839, "XYZ"),
         true
     );
 
@@ -421,7 +429,8 @@ function init() {
         -55.12002969,
         1.77004347,
         0x3339FF,
-        100,
+        0.00010865669,
+        new Euler(0.4947, 2.2994, 0.7848, "XYZ"),
         true
     );
 

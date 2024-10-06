@@ -37,7 +37,7 @@ export class Skybox {
             opacity: 1,
         })
         this.galaxyMesh = new THREE.Mesh(this.galaxyGeometry, this.galaxyMaterial)
-        this.galaxyMesh.position.set(x, y + 75000, z)
+        this.galaxyMesh.position.set(x, y + 25500000, z)
 
         this.showGalaxy(false);
     }

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {FrontSide, Vector3} from 'three';
+import {Euler, FrontSide, Vector3} from 'three';
 import {CelestialBodyList} from './CelestialBodyList';
 import {IRing, Util} from "./Util";
 
@@ -27,6 +27,7 @@ export class CelestialBody {
     orbitColor: THREE.ColorRepresentation;
     marker: THREE.Mesh;
     rotationBySecond: number;
+    axisInclicnation: Euler;
     ringMesh: THREE.Mesh | undefined;
 
 
@@ -47,7 +48,8 @@ export class CelestialBody {
         inclination: number,
         orbitColor: THREE.ColorRepresentation,
         rotation: number,
-        castShadow: boolean = false
+        axis: Euler,
+        castShadow: boolean = false,
         ring: IRing | undefined = undefined
     ) {
         this.name = name;
@@ -70,7 +72,7 @@ export class CelestialBody {
         this.trueAnomalyS = 0;
         this.orbitColor = orbitColor;
         this.rotationBySecond = rotation;
-        console.log(rotation)
+        this.axisInclicnation = axis;
 
         const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
         if (typeof texture === 'string') {
@@ -95,13 +97,12 @@ export class CelestialBody {
         }
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
+        this.mesh.rotation.copy(this.axisInclicnation);
 
         const markerGeometry = new THREE.SphereGeometry(10, 16, 16);
         const markerMaterial = new THREE.MeshBasicMaterial({ color: orbitColor, transparent: true, opacity: 0.5 });
         this.marker = new THREE.Mesh(markerGeometry, markerMaterial);
         this.marker.position.copy(this.position);
-
-        CelestialBodyList.getInstance().addCelestialBody(this);
 
         if (ring !== undefined) {
             let ringGeometry = new THREE.RingGeometry(this.radius * ring.innerRadiusMult, this.radius * ring.outerRadiusMult, 32);
@@ -123,6 +124,7 @@ export class CelestialBody {
 
             this.mesh.children.push(ringMesh);
         }
+
         CelestialBodyList.getInstance().addCelestialBody(this);
     }
 
@@ -130,7 +132,7 @@ export class CelestialBody {
     update(date: Date, simSpeed : number, distanceFromCamera : number) {
         
         let vector = this.calculateOrbitPosition(date, simSpeed);
-        console.log(vector);
+        //console.log(vector);
 
          // Tamaño base del marcador
         const baseSize = 1;
@@ -139,21 +141,22 @@ export class CelestialBody {
         const scaleFactor = baseSize * (distanceFromCamera / 3000);
         this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
+        this.mesh.rotation.y += this.rotationBySecond;
+
         if (this.name === "Sun") {
             this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
             this.marker.position.set(0,0,0);
             return;
         }
+
         this.marker.position.copy(vector);
-        
         this.mesh.position.copy(vector);
         if (this.ringMesh !== undefined){
             this.mesh.children[0].position.copy( new Vector3(vector.x, vector.y, vector.z));
-        }
 
-        console.log(this.mesh.rotation.y)
-        console.log(this.rotationBySecond)
-        this.mesh.rotation.y += this.rotationBySecond;
+        }
+        // console.log(this.mesh.rotation.y)
+        // console.log(this.rotationBySecond)
     }
     // Función de placeholder para las ecuaciones de Kepler
     calculateOrbitPosition(date: Date , simSpeed : number): THREE.Vector3 {
@@ -396,4 +399,13 @@ export class CelestialBody {
   getRadius() {
     return this.radius;
   }
+
+    getRotationSpeed() {
+        return this.rotationBySecond;
+    }
+
+    setRotationSpeed(number: number) {
+        console.log("rotation aaaaaaaa", number)
+        this.rotationBySecond = number;
+    }
 }
