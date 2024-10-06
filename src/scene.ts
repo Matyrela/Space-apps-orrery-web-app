@@ -71,6 +71,7 @@ const animation = { enabled: true, play: true }
 
 init()
 animate()
+traceOrbits()
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
@@ -217,7 +218,7 @@ function init() {
         -5.11260389,
         100.46691572,
         -0.00054346,
-
+        0x22ABDF,
         true
     )
 
@@ -237,6 +238,7 @@ function init() {
       49.55953891,
       -4.55343205,
       1.84969142,
+      0xFF5E33,
       true
     )
 
@@ -256,6 +258,7 @@ function init() {
       100.47390909,
       34.39644051,
       1.30439695,
+      0xA2440A,
       true
     );
 
@@ -275,6 +278,7 @@ function init() {
       76.67261496,
       181.97970850,
       3.39777545,
+      0xD8B712,
       true
     );
 
@@ -294,6 +298,7 @@ function init() {
         113.66242448,
         49.95424423,
         2.48599187,
+        0xF6D624,
         true
         );
 
@@ -313,6 +318,7 @@ function init() {
         48.33076593,
         252.25032350,
         7.00497902,
+        0xA195A8,
         true
     );
 
@@ -332,6 +338,7 @@ function init() {
         74.01692503,
         313.23810451,
         0.77263783,
+        0x949AFF,
         true
     );
 
@@ -351,6 +358,7 @@ function init() {
         131.78422574,
         -55.12002969,
         1.77004347,
+        0x3339FF,
         true
     );
 
@@ -443,6 +451,13 @@ function init() {
   }
 }
 
+function traceOrbits() {
+  CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
+    let line = celestialBody.traceOrbits();
+    scene.add(line);
+  })
+  
+}
 
 function animate() {
   requestAnimationFrame(animate)

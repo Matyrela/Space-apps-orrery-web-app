@@ -25,6 +25,7 @@ export class CelestialBody {
     inclination: number;
     period: number;
     trueAnomalyS: number;
+    orbitColor: THREE.ColorRepresentation;
 
     constructor(
         name: string,
@@ -42,11 +43,12 @@ export class CelestialBody {
         longitudeOfAscendingNode: number,
         meanLongitude: number,
         inclination: number,
+        orbitColor: THREE.ColorRepresentation,
         castShadow: boolean = false,
         emissive: number = 0x000000
     ) {
         this.name = name;
-        this.radius = Util.KmtoAU(radius)*100;
+        this.radius = Util.KmtoAU(radius)*10000;
         this.mass = mass;
         this.time = time;
         this.position = initialPosition;
@@ -68,6 +70,7 @@ export class CelestialBody {
         this.inclination = inclination;
         this.period = Math.sqrt(Math.pow(this.semiMajorAxis, 3));
         this.trueAnomalyS = 0;
+        this.orbitColor = orbitColor;
 
         const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
         if (typeof texture === 'string') {
@@ -188,7 +191,39 @@ export class CelestialBody {
 
         return pos ;
         }
-
+    
+        traceOrbits() {
+            // Generate line segments from points around the trajectory of the orbiting objects.
+            // Use BufferGeometry for creating the line geometry
+            const geometry = new THREE.BufferGeometry(); // BufferGeometry instead of Geometry
+            const material = new THREE.LineBasicMaterial({ color: this.orbitColor });
+            const orbPos = [];
+            let i = 0.0;
+        
+            // Loop to propagate the orbit positions
+            while (i <= Math.PI * 2) {
+                const pos = this.propagate(i);  // Propagate the orbit to get the position
+        
+                orbPos.push(new THREE.Vector3(pos[1]*Util.SIZE_SCALER, pos[2]*Util.SIZE_SCALER, pos[0]*Util.SIZE_SCALER));
+                
+    // Add the vertex to the array
+               
+        
+                i += 0.0785;  // Increment the orbit angle
+            }
+            
+           
+            // Set the vertices array to the BufferGeometry
+            geometry.setFromPoints(orbPos);
+        
+            // Create the line object for the orbit trace
+            const line = new THREE.Line(geometry, material);
+        
+            const orbitName = this.name + "_trace";
+            line.name = orbitName;
+        
+            return line;  // Return the line if you want to add it to the scene later
+        }
     //T en segundos
     orbitalTime(): number {
         let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));

@@ -17,7 +17,7 @@ export class Util {
     }
 
     static KmtoAU(km : number): number{
-        return km/(1.496e4* this.SIZE_SCALER);
+        return km/(1.496e8);
     }
 
 
