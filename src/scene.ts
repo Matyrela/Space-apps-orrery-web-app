@@ -1,4 +1,3 @@
-import GUI from 'lil-gui'
 import CameraControls from 'camera-controls';
 import * as THREE from 'three';
 import {
@@ -15,7 +14,6 @@ import {
   WebGLRenderer
 } from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module'
-import {toggleFullScreen} from './helpers/fullscreen'
 import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style-map.css'
 import {Skybox} from "./objects/skybox";
@@ -23,7 +21,7 @@ import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
 import {SimulatedTime} from "./objects/SimulatedTime";
 import {BehaviorSubject} from 'rxjs'
-import { Util } from './objects/Util';
+import {Util} from './objects/Util';
 
 CameraControls.install({THREE: THREE});
 
@@ -43,7 +41,6 @@ let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
 let clock: Clock
 let stats: Stats
-let gui: GUI
 
 let selectedBody: BehaviorSubject<CelestialBody | null> = new BehaviorSubject(null);
 let selectedBodyFullyTransitioned: boolean = false;
@@ -62,11 +59,11 @@ let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
 let newDate = new Date();
 //Global Variables
 let epoch = new Date(Date.now());  // start the calendar 
-let simSpeed = 1 ;
+let simSpeed = 1;
 let distanceFromCamera = 0;
 
 //a revisar
-const animation = { enabled: true, play: true }
+const animation = {enabled: true, play: true}
 
 init()
 animate()
@@ -177,7 +174,7 @@ function init() {
   // ===== 🎥 CAMERA =====
   {
     camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, renderSize * 8)
-    camera.position.set(2*Util.SIZE_SCALER, 2*Util.SIZE_SCALER, 5*Util.SIZE_SCALER)
+    camera.position.set(2 * Util.SIZE_SCALER, 2 * Util.SIZE_SCALER, 5 * Util.SIZE_SCALER)
 
     cameraControls = new CameraControls(camera, renderer.domElement);
     cameraControls.dampingFactor = 0.1;
@@ -201,7 +198,7 @@ function init() {
         orbitLines.forEach((line) => {
           scene.remove(line);
         });
-      }else{
+      } else {
         orbitLines.forEach((line) => {
           scene.add(line);
         });
@@ -251,63 +248,63 @@ function init() {
     )
 
     let mars = new CelestialBody(
-      "Mars",
-      3389.5,
-      6.39e23,
-      "marsMap.jpg",
-      1,
-      new Vector3(0, 0, 0),
-      new Vector3(0, 0, 0),
-      null,
-      1.52371034,
-      new Date(Date.UTC(2000, 0, 1, 0, 0 ,0)),
-      0.09339410,
-      -23.94362959,
-      49.55953891,
-      -4.55343205,
-      1.84969142,
-      0xFF5E33,
-      true
+        "Mars",
+        3389.5,
+        6.39e23,
+        "marsMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        1.52371034,
+        new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
+        0.09339410,
+        -23.94362959,
+        49.55953891,
+        -4.55343205,
+        1.84969142,
+        0xFF5E33,
+        true
     )
 
     let jupiter = new CelestialBody(
-      "Jupiter",
-      69911,
-      1.898e27,
-      "JupiterMap.jpg",
-      1,
-      new Vector3(0, 0, 0),
-      new Vector3(0, 0, 0),
-      null,
-      5.20288700,
-      new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
-      0.04838624,
-      14.72847983,
-      100.47390909,
-      34.39644051,
-      1.30439695,
-      0xA2440A,
-      true
+        "Jupiter",
+        69911,
+        1.898e27,
+        "JupiterMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        5.20288700,
+        new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
+        0.04838624,
+        14.72847983,
+        100.47390909,
+        34.39644051,
+        1.30439695,
+        0xA2440A,
+        true
     );
 
     let venus = new CelestialBody(
-      "Venus",
-      6051.8,
-      4.867e24,
-      "venusMap.jpg",
-      1,
-      new Vector3(0, 0, 0),
-      new Vector3(0, 0, 0),
-      null,
-      0.72332102,
-      new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
-      0.00676399,
-      131.76755713,
-      76.67261496,
-      181.97970850,
-      3.39777545,
-      0xD8B712,
-      true
+        "Venus",
+        6051.8,
+        4.867e24,
+        "venusMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        null,
+        0.72332102,
+        new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
+        0.00676399,
+        131.76755713,
+        76.67261496,
+        181.97970850,
+        3.39777545,
+        0xD8B712,
+        true
     );
 
     let saturn = new CelestialBody(
@@ -328,7 +325,7 @@ function init() {
         2.48599187,
         0xF6D624,
         true
-        );
+    );
 
     let mercury = new CelestialBody(
         "Mercury",
@@ -425,13 +422,6 @@ function init() {
 
       selectedBodyFullyTransitioned = true;
     });
-
-    // Full screen
-    window.addEventListener('dblclick', (event) => {
-      if (event.target === canvas) {
-        toggleFullScreen(canvas)
-      }
-    })
   }
 
   // ===== 🪄 HELPERS =====
@@ -450,45 +440,6 @@ function init() {
     clock = new Clock()
     stats = new Stats()
     document.body.appendChild(stats.dom)
-  }
-
-  // ==== 🐞 DEBUG GUI ====
-  {
-    gui = new GUI({
-      title: '🐞 Debug GUI', width: 300,
-      autoPlace: false,
-    });
-    document.getElementById('gui-container')!.appendChild(gui.domElement);
-
-    const lightsFolder = gui.addFolder('Lights')
-    lightsFolder.add(pointLight, 'visible').name('point light')
-    lightsFolder.add(ambientLight, 'visible').name('ambient light')
-
-    const helpersFolder = gui.addFolder('Helpers')
-    helpersFolder.add(axesHelper, 'visible').name('axes')
-    helpersFolder.add(pointLightHelper, 'visible').name('pointLight')
-
-    const cameraFolder = gui.addFolder('Camera')
-    cameraFolder.add(cameraControls, 'autoRotate')
-
-    // persist GUI state in local storage on changes
-    gui.onFinishChange(() => {
-      const guiState = gui.save()
-      localStorage.setItem('guiState', JSON.stringify(guiState))
-    })
-
-    // load GUI state if available in local storage
-    const guiState = localStorage.getItem('guiState')
-    if (guiState) gui.load(JSON.parse(guiState))
-
-    // reset GUI state button
-    const resetGui = () => {
-      localStorage.removeItem('guiState')
-      gui.reset()
-    }
-    gui.add({resetGui}, 'resetGui').name('RESET')
-
-    gui.close()
   }
 }
 
@@ -522,16 +473,15 @@ function animate() {
         false
     )
     cameraControls.setTarget(
-          selectedBody.getValue().getPosition().x,
-          selectedBody.getValue().getPosition().y,
-          selectedBody.getValue().getPosition().z,
-          false
-      )
+        selectedBody.getValue().getPosition().x,
+        selectedBody.getValue().getPosition().y,
+        selectedBody.getValue().getPosition().z,
+        false
+    )
 
   }
 
 
-    
   cameraControls.update(delta);
 
   // Redimensionar si es necesario
@@ -549,10 +499,12 @@ function updateTheDate() {
   if (simSpeed == 1) {
     epoch = new Date(Date.now());            // At maximum speed, increment calendar by a day for each clock-cycle.
   } else if (0 > simSpeed) {
-      epoch.setDate(epoch.getDate() - simSpeed * 24 * 3600000)
-  } else if (simSpeed == 0){
-      epoch.setDate(Date.now());
-  } else {  epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000) ; }  // 24 hours * milliseconds in an hour * simSpeed 
-    
-  }
+    epoch.setDate(epoch.getDate() - simSpeed * 24 * 3600000)
+  } else if (simSpeed == 0) {
+    epoch.setDate(Date.now());
+  } else {
+    epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000);
+  }  // 24 hours * milliseconds in an hour * simSpeed
+
+}
 
