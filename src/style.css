@@ -148,6 +148,34 @@ a:hover {
     animation: slideUp 2s ease forwards;
 }
 
+.rocket-animation-container {
+    display: flex;
+    margin-top: 10rem;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; 
+    background-image: url('/space-background.webp');
+}
+
+.rocket-image {
+    width: 100px;
+    animation: rocketLaunch 3s ease-out forwards;
+}
+
+@keyframes rocketLaunch {
+    0% {
+        transform: translateY(300);
+    }
+    50% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-1800px);
+    }
+}
+
+
+
 
 
 
