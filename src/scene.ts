@@ -85,7 +85,6 @@ loadingManager.onLoad = () => {
   console.log('✅ ¡Todos los recursos cargados! Iniciando la escena...');
   init();
   animate()
-  traceOrbits()
 
   // @ts-ignore
   document.querySelector("div#over-canvas").style.animation = 'fadeIn 1s forwards';
@@ -479,13 +478,50 @@ function init() {
         true
     );
 
-    scene.add(...celestialBodyList.getMeshes());
-    let bodyList = celestialBodyList.getCelestialBodies();
-    for (let body of bodyList) {
-      if (body.marker) {
-        scene.add(body.marker);
+    async function processAsteroids() {
+      try {
+        let asteroids = await Util.CSVToArray("data/dataset.csv");
+        console.log(asteroids);
+
+        for (let i = 0; i < asteroids.length; i++) {
+          let asteroid = asteroids[i];
+          let asteroidBody = new CelestialBody(
+              asteroid.name,
+              asteroid.diameter / 2,
+              asteroid.gm / Util.GRAVITATIONALCONSTANT,
+              "lunasGenericasMap.jpg",
+              1,
+              new Vector3(0, 0, 0),
+              new Vector3(0, 0, 0),
+              asteroid.a,
+              new Date(Date.UTC((asteroid.tp))),
+              asteroid.e,
+              asteroid.q,
+              asteroid.om,
+              asteroid.w,
+              asteroid.i,
+              0x7F7F7F,
+              0.0000002994132,
+              new Euler(0, 0, 0, 'XYZ'),
+              true
+          );
+
+        }
+      } catch (error) {
+        console.error("Error parsing CSV:", error);
       }
     }
+
+    processAsteroids().then(() => {
+      scene.add(...celestialBodyList.getMeshes());
+      let bodyList = celestialBodyList.getCelestialBodies();
+      for (let body of bodyList) {
+        if (body.marker) {
+          scene.add(body.marker);
+        }
+      }
+      traceOrbits()
+    });
   }
 
   // ===== 🕹️ CONTROLS =====
