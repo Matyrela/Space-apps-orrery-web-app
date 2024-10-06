@@ -11,8 +11,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
+        aboutUs: path.resolve(__dirname, 'about-us.html'),
+        credits: path.resolve(__dirname, 'credits.html'),
         main: path.resolve(__dirname, 'index.html'),
-        map: path.resolve(__dirname, 'map.html')
+        learn: path.resolve(__dirname, 'learn-more.html'),
+        map: path.resolve(__dirname, 'map.html'),
+        transition: path.resolve(__dirname, 'transition.html'),
       }
     }
   }

@@ -180,15 +180,15 @@ function init() {
     camera.position.set(2*Util.SIZE_SCALER, 2*Util.SIZE_SCALER, 5*Util.SIZE_SCALER)
 
     cameraControls = new CameraControls(camera, renderer.domElement);
-    cameraControls.dampingFactor = 0.1; // Optional: Enable smooth damping
+    cameraControls.dampingFactor = 0.1;
     cameraControls.draggingDampingFactor = 0.3;
-    cameraControls.verticalDragToForward = true; // Optional: Enable panning
+    cameraControls.verticalDragToForward = true;
 
   }
 
   // ===== 📦 OBJECTS =====
   {
-    skybox = new Skybox(0, 0, 0, renderSize / 2, camera);
+    skybox = new Skybox(0, 0, 0, renderSize / 1.5, camera);
     scene.add(...skybox.getMesh());
 
     skybox.galaxyVisible.subscribe((bool) => {
