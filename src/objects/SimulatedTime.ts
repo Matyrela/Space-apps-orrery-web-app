@@ -10,6 +10,6 @@ export class SimulatedTime {
     getSimulatedTime(timeScale: number): Date {
         let realElapsedTime = Date.now() - this.realStartTime;
         let simulatedElapsedTime = realElapsedTime * timeScale;
-        return new Date(this.startTime + simulatedElapsedTime);
+        return new Date(this.startTime + simulatedElapsedTime * 24 * 3600000);
     }
 }

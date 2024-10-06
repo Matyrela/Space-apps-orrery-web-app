@@ -331,7 +331,7 @@ function animate() {
     camera.aspect = canvas.clientWidth / canvas.clientHeight
     camera.updateProjectionMatrix()
     //cambiar
-    date = simulatedTime.getSimulatedTime(86400000);
+    date = simulatedTime.getSimulatedTime(3);
 
     console.log(date);
 

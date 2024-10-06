@@ -23,6 +23,7 @@ export class CelestialBody {
     perihelion: number;
     meanLongitude: number;
     inclination: number;
+    firstMeanAnomaly: boolean;
 
     constructor(
         name: string,
@@ -64,6 +65,7 @@ export class CelestialBody {
         this.perihelion = longitudeOfPerihelion - longitudeOfAscendingNode;
         this.meanLongitude = meanLongitude;
         this.inclination = inclination;
+        this.firstMeanAnomaly = true;
 
         const geometry = new THREE.SphereGeometry(radius, 32, 32);
         if (typeof texture === 'string') {
@@ -102,30 +104,40 @@ export class CelestialBody {
         this.mesh.position.copy(vector);
     }
 
-    // Función de placeholder para las ecuaciones de Kepler
     calculateOrbitPosition(date: Date): THREE.Vector3 {
 
-        let xOrbPlane = this.semiMajorAxis * (Math.cos(this.excentricAnomaly(date)) - this.e);
-        let yOrbPlane = this.semiMajorAxis * Math.sqrt(1 - Math.pow(this.e, 2)) * Math.sin(this.excentricAnomaly(date));
+        // let xOrbPlane = this.semiMajorAxis * (Math.cos(this.excentricAnomaly(date)) - this.e);
+        // let yOrbPlane = this.semiMajorAxis * Math.sqrt(1 - Math.pow(this.e, 2)) * Math.sin(this.excentricAnomaly(date));
+        //
+        // let xCart = xOrbPlane * (Math.cos(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.sin(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
+        //     + yOrbPlane * (-Math.sin(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.cos(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination));
+        //
+        // let yCart = xOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.sin(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
+        //     + yOrbPlane * (-Math.sin(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.cos(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination));
+        //
+        // let zCart = xOrbPlane * (Math.sin(this.perihelion) * Math.sin(this.inclination))
+        //     + yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination));
 
-        let xCart = xOrbPlane * (Math.cos(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.sin(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
-            + yOrbPlane * (-Math.sin(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.cos(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination));
+        let E = this.excentricAnomaly(date);
+        let xPrime = this.semiMajorAxis * (Math.cos(E) - this.e);
+        let yPrime = this.semiMajorAxis * Math.sqrt(1 - Math.pow(this.e, 2)) * Math.sin(E);
 
-        let yCart = xOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.sin(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
-            + yOrbPlane * (-Math.sin(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.cos(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination));
+        let xecl = (Math.cos(this.longitudeOfPerihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.sin(this.longitudeOfPerihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
+            * xPrime + (-Math.sin(this.longitudeOfPerihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.cos(this.longitudeOfPerihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination)) * yPrime;
 
-        let zCart = xOrbPlane * (Math.sin(this.perihelion) * Math.sin(this.inclination))
-            + yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination));
+        let yecl = (Math.cos(this.longitudeOfPerihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.sin(this.longitudeOfPerihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
+            * xPrime + (-Math.sin(this.longitudeOfPerihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.cos(this.longitudeOfPerihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination)) * yPrime;
 
-        return new THREE.Vector3(xCart, zCart, yCart);
+        let zecl = (Math.sin(this.longitudeOfPerihelion) * Math.sin(this.inclination)) * xPrime + (Math.cos(this.longitudeOfPerihelion) * Math.sin(this.inclination)) * yPrime;
+        return new THREE.Vector3(xecl, zecl, yecl);
     }
 
-    //T en segundos
-    orbitalTime(): number {
-        let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));
-        //console.log("ORBITAL TIME: " + Math.sqrt(t));
-        return Math.sqrt(t);
-    }
+    // //T en segundos
+    // orbitalTime(): number {
+    //     let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));
+    //     //console.log("ORBITAL TIME: " + Math.sqrt(t));
+    //     return Math.sqrt(t);
+    // }
 
     julianDate(date: Date): number {
         let y = date.getUTCFullYear() + 8000;
@@ -148,19 +160,23 @@ export class CelestialBody {
     }
 
     //M en radianes
-    meanAnomaly(date): number {
-        let meanAnomaly = this.meanLongitude - this.longitudeOfPerihelion + Math.pow(this.getT(date), 2) * Math.cos(this.getT(date)) + Math.sin(this.getT(date));
+    meanAnomaly(date: Date, En : number): number {
+        let meanAnomaly = 0;
+        if (this.firstMeanAnomaly) {
+            meanAnomaly = this.meanLongitude - this.longitudeOfPerihelion + Math.pow(this.getT(date), 2) * Math.cos(this.getT(date)) + Math.sin(this.getT(date));
+        } else {
+            meanAnomaly = En - this.e * Math.sin(En);
+        }
         console.log("MEAN ANOMALY: " + meanAnomaly);
         return meanAnomaly;
     }
 
-    //E en radianes
+    //E
     excentricAnomaly(date: Date): number {
         //e0
         //console.log("ITERACION:")
-        let en = this.meanAnomaly(date) + (this.ESTAR * Math.sin(this.meanAnomaly(date)));
-
-        while (Math.abs(this.calculateSumExcentricAnomaly(date, en)) <= Util.TOL) {
+        let en = 1;
+        while (en > Util.TOL) {
             en = en + (this.calculateSumExcentricAnomaly(date, en));
         }
 
@@ -168,15 +184,15 @@ export class CelestialBody {
         return en;
     }
 
-    calculateElapsedTime(t0: Date) {
-        let actualTime = new Date().getTime();
-        let elapsedTime = actualTime - t0.getTime();
-        //console.log("ELAPSED TIME: " + elapsedTime / 1000);
-        return elapsedTime / 1000;
-    }
+    // calculateElapsedTime(t0: Date) {
+    //     let actualTime = new Date().getTime();
+    //     let elapsedTime = actualTime - t0.getTime();
+    //     //console.log("ELAPSED TIME: " + elapsedTime / 1000);
+    //     return elapsedTime / 1000;
+    // }
 
     calculateSumMeanAnomaly(date: Date, En: number): number {
-        let sumMeanAnomaly = this.meanAnomaly(date) - (En - (this.ESTAR * Math.sin(En)));
+        let sumMeanAnomaly = this.meanAnomaly(date, En) - (En - (this.ESTAR * Math.sin(En)));
         //console.log("SUM MEAN ANOMALY: " + sumMeanAnomaly);
         return sumMeanAnomaly;
     }
@@ -186,18 +202,18 @@ export class CelestialBody {
         return this.calculateSumMeanAnomaly(date, En) / (1 - (this.ESTAR * Math.cos(En)));
     }
 
-    trueAnomaly(date: Date): number {
-        let E = this.excentricAnomaly(date);
-        let tan = Math.sqrt((1 + this.e) / (1 - this.e)) * Math.tan(E / 2);
+    // trueAnomaly(date: Date): number {
+    //     let E = this.excentricAnomaly(date);
+    //     let tan = Math.sqrt((1 - this.e) / (1 + this.e)) * Math.tan(E / 2);
+    //
+    //     //console.log("TRUE ANOMALY: " + 2 * Math.atan(tan));
+    //     return 2 * Math.atan(tan);
+    // }
 
-        //console.log("TRUE ANOMALY: " + 2 * Math.atan(tan));
-        return 2 * Math.atan(tan);
-    }
-
-    radialDistance(date: Date): number {
-        //console.log("RADIAL DISTANCE: " + (this.semiMajorAxis * (1 - Math.pow(this.e, 2))) / (1 + this.e * Math.cos(this.trueAnomaly(date))));
-        return (this.semiMajorAxis * (1 - Math.pow(this.e, 2))) / (1 + this.e * Math.cos(this.trueAnomaly(date)));
-    }
+    // radialDistance(date: Date): number {
+    //     //console.log("RADIAL DISTANCE: " + (this.semiMajorAxis * (1 - Math.pow(this.e, 2))) / (1 + this.e * Math.cos(this.trueAnomaly(date))));
+    //     return (this.semiMajorAxis * (1 - Math.pow(this.e, 2))) / (1 + this.e * Math.cos(this.trueAnomaly(date)));
+    // }
 
     // Método para actualizar el mesh visual
     updateMesh() {
