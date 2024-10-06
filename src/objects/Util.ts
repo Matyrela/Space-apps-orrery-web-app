@@ -27,3 +27,8 @@ export class Util {
     static SIZE_SCALER = 10000
     static TOL = 1e-6;
 }
+ export interface IRing{
+    ringTexture: string;
+    innerRadiusMult: number;
+    outerRadiusMult: number;
+ };
