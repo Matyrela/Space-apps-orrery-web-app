@@ -64,8 +64,8 @@ let simulatedTime = new SimulatedTime();
 let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
 let newDate = new Date();
 //Global Variables
-var epoch = new Date('October 6, 2024');  // start the calendar 
-var simSpeed = 0.5 ; 
+let epoch = new Date(Date.now());  // start the calendar 
+let simSpeed = 1 ;
 
 const animation = { enabled: true, play: true }
 
@@ -203,7 +203,7 @@ function init() {
 
     let earth = new CelestialBody(
         "Earth",
-        0.1,
+        6378,
         5.972e24,
         "earthMap.png",
         1,
@@ -220,6 +220,62 @@ function init() {
         true
     )
 
+    let mars = new CelestialBody(
+      "Mars",
+      3389.5,
+      6.39e23,
+      "marsMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      null,
+      1.52371034,
+      new Date(Date.UTC(2000, 0, 1, 0, 0 ,0)),
+      0.09339410,
+      -23.94362959,
+      49.55953891,
+      -4.55343205,
+      1.84969142,
+      true
+    )
+
+    let jupiter = new CelestialBody(
+      "Jupiter",
+      69911,
+      1.898e27,
+      "JupiterMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      null,
+      5.20288700,
+      new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
+      0.04838624,
+      14.72847983,
+      100.47390909,
+      34.39644051,
+      1.30439695,
+      true
+    )
+
+    let venus = new CelestialBody(
+      "Venus",
+      6051.8,
+      4.867e24,
+      "venusMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      null,
+      0.72332102,
+      new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
+      0.00676399,
+      131.76755713,
+      76.67261496,
+      181.97970850,
+      3.39777545,
+      true
+    )
     /*
     let pelota = new CelestialBody(
         "Pelota",
@@ -342,6 +398,9 @@ function animate() {
 
     CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
       celestialBody.update(epoch, simSpeed);
+      if(celestialBody.name == "Venus"){
+        //console.log("Vector Venus: " + celestialBody.getPosition().toArray())
+      }
     })
     updateTheDate();
 
@@ -360,9 +419,12 @@ function animate() {
 
 function updateTheDate() 
   { 
-  //  epoch.setTime(epoch.getTime() + simSpeed * 86400)
   if (simSpeed == 1) {
-      epoch.setDate(epoch.getDate() + 1) ;            // At maximum speed, increment calendar by a day for each clock-cycle.
+      epoch = new Date(Date.now());            // At maximum speed, increment calendar by a day for each clock-cycle.
+  } else if (0 > simSpeed) {
+      epoch.setDate(epoch.getDate() - simSpeed * 24 * 3600000)
+  } else if (simSpeed == 0){
+      epoch.setDate(Date.now());
   } else {  epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000) ; }  // 24 hours * milliseconds in an hour * simSpeed 
     
   //	 document.getElementById("modelDate").innerHTML = (epoch.getMonth() + 1) + "-" + epoch.getDate() + "-" + epoch.getFullYear() ;

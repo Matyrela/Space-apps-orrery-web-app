@@ -16,7 +16,14 @@ export class Util {
         return date.getTime() / (1000 * 60 * 60 * 24);
     }
 
+    static KmtoAU(km : number): number{
+        return km/(1.496e4* this.SIZE_SCALER);
+    }
+
+
     static SUNMASS = 1.989e30;
     static GRAVITATIONALCONSTANT = 6.67430e-11;
+    static AU = 1.496e8
+    static SIZE_SCALER = 10
     static TOL = 1e-6;
 }

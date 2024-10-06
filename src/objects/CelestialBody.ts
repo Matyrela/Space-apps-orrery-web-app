@@ -46,7 +46,7 @@ export class CelestialBody {
         emissive: number = 0x000000
     ) {
         this.name = name;
-        this.radius = radius;
+        this.radius = Util.KmtoAU(radius)*100;
         this.mass = mass;
         this.time = time;
         this.position = initialPosition;
@@ -69,7 +69,7 @@ export class CelestialBody {
         this.period = Math.sqrt(Math.pow(this.semiMajorAxis, 3));
         this.trueAnomalyS = 0;
 
-        const geometry = new THREE.SphereGeometry(radius, 32, 32);
+        const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
         if (typeof texture === 'string') {
             this.texture = new THREE.TextureLoader().load(texture);
         } else {
@@ -126,7 +126,7 @@ export class CelestialBody {
         let zCart = xOrbPlane * (Math.sin(this.perihelion) * Math.sin(this.inclination))
             + yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination)); */
             var pos = this.propagate(this.trueAnomalyS)
-            console.log(this.trueAnomalyS);
+            //console.log(this.trueAnomalyS);
 
             var currentPosition = [] ;
             var deltaTime = 0 ;
@@ -136,14 +136,12 @@ export class CelestialBody {
                
            // Calculate Eccentric Anomaly E based on the orbital eccentricity and previous true anomaly:
               var e = this.e ;
-              var f = this.trueAnomalyS;         // heavenlyBodies[hB].trueAnomoly ;
+              var f = this.trueAnomalyS;         
               var eA = this.trueToEccentricAnomaly(e,f)            // convert from true anomaly to eccentric anomaly
               
            // Calculate current Mean Anomaly	
               var m0 = eA - e * Math.sin(eA);	
              
-           // deltaTime = (Math.abs(m0/n) - heavenlyBodies[hB].time) * simSpeed
-          //  deltaTime = Math.abs(m0/n) * simSpeed
               deltaTime = simSpeed * n
       
            // Update Mean anomaly by adding the Mean Anomaly at Epoch to the mean motion * delaTime
@@ -155,11 +153,11 @@ export class CelestialBody {
               var trueAnomaly = this.eccentricToTrueAnomaly(e, eA) 
               this.trueAnomalyS = trueAnomaly
 
-              var xCart = pos[0];
-              var yCart = pos[1];
-              var zCart = pos[2];
-            console.log("ycart: " + yCart)
-              return new THREE.Vector3(yCart, xCart, zCart);
+              var xCart = pos[0]*1000;
+              var yCart = pos[1]*1000;
+              var zCart = pos[2]*1000;
+            //console.log("ycart: " + yCart)
+              return new THREE.Vector3(yCart, zCart, xCart);
             }
 
         
@@ -183,8 +181,12 @@ export class CelestialBody {
         pos[0] = r * (Math.cos(aP + theta) * Math.cos(aN) - Math.cos(oI) * Math.sin(aP + theta) * Math.sin(aN)) ;  
         pos[1] = r * (Math.cos(aP + theta) * Math.sin(aN) + Math.cos(oI) * Math.sin(aP + theta) * Math.cos(aN)) ;
         pos[2] = r * (Math.sin(aP + theta) * Math.sin(oI)) ;
+        //let xOrbPlane = r * Math.cos(this.trueAnomalyS); // x in orbital plane
+        //let yOrbPlane = r * Math.sin(this.trueAnomalyS); // y in orbital plane
+        //pos[0] = xOrbPlane * (Math.sin(this.perihelion) * Math.sin(this.inclination))
+        //+ yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination));
 
-        console.log(pos)
+        //console.log(pos)
         
         return pos ;
         }
@@ -212,7 +214,7 @@ export class CelestialBody {
 
     getT(date: Date): number {
         let JulianDate = this.julianDate(date);
-        console.log("T: " + (JulianDate - 2451545)/36525);
+        //console.log("T: " + (JulianDate - 2451545)/36525);
         return (JulianDate - 2451545)/36525;
     }
 
@@ -283,7 +285,7 @@ export class CelestialBody {
     }
 
     calculateSumExcentricAnomaly(date: Date, En: number): number {
-        console.log("SUM EXCENTRIC ANOMALY: " + this.calculateSumMeanAnomaly(date, En) / (1 - (this.ESTAR * Math.cos(En))));
+        //console.log("SUM EXCENTRIC ANOMALY: " + this.calculateSumMeanAnomaly(date, En) / (1 - (this.ESTAR * Math.cos(En))));
         return this.calculateSumMeanAnomaly(date, En) / (1 - (this.ESTAR * Math.cos(En)));
     }
 
