@@ -1,10 +1,9 @@
-import GUI from 'lil-gui'
 import CameraControls from 'camera-controls';
 import * as THREE from 'three';
 import {
   AmbientLight,
   AxesHelper,
-  Clock,
+  Clock, Euler,
   LoadingManager,
   PCFSoftShadowMap,
   PerspectiveCamera,
@@ -15,15 +14,13 @@ import {
   WebGLRenderer
 } from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module'
-import {toggleFullScreen} from './helpers/fullscreen'
 import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style-map.css'
 import {Skybox} from "./objects/skybox";
 import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
-import {SimulatedTime} from "./objects/SimulatedTime";
 import {BehaviorSubject} from 'rxjs'
-import { Util } from './objects/Util';
+import {IRing, Util} from './objects/Util';
 
 CameraControls.install({THREE: THREE});
 
@@ -43,7 +40,6 @@ let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
 let clock: Clock
 let stats: Stats
-let gui: GUI
 
 let selectedBody: BehaviorSubject<CelestialBody | null> = new BehaviorSubject(null);
 let selectedBodyFullyTransitioned: boolean = false;
@@ -53,24 +49,89 @@ let orbitLines = []
 let searchBar: HTMLInputElement
 let similaritiesList: HTMLDivElement
 let similaritiesListObjects: HTMLDivElement
+let dateText: HTMLParagraphElement
+let inputDate: HTMLInputElement
+let timeScaleText: HTMLParagraphElement
 
 let skybox: Skybox
 let celestialBodyList: CelestialBodyList
 
-let simulatedTime = new SimulatedTime();
-let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
-let newDate = new Date();
 //Global Variables
 let epoch = new Date(Date.now());  // start the calendar 
-let simSpeed = 1 ;
+let simSpeedAbs = 1/2592000;
+let simSpeed = 1;
+let simSpeedPrint = 0;
 let distanceFromCamera = 0;
 
-//a revisar
-const animation = { enabled: true, play: true }
 
-init()
-animate()
-//traceOrbits()
+loadingManager = new LoadingManager();
+
+loadingManager.onStart = (url, itemsLoaded, itemsTotal) => {
+  console.log('🔄 Comenzando la carga de recursos...');
+};
+
+loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+  let percentage = Math.floor((itemsLoaded / itemsTotal) * 100);
+  document.querySelector("p#percentage")!.textContent = `${percentage}%`;
+  // @ts-ignore
+  document.querySelector("div#percentage-loading").style.width = `${percentage}%`;
+  document.querySelector("h3#current-resource").textContent = url;
+  console.log(`📥 Cargando recurso: ${url} -> ${itemsLoaded} / ${itemsTotal}`);
+};
+
+
+
+loadingManager.onLoad = () => {
+  console.log('✅ ¡Todos los recursos cargados! Iniciando la escena...');
+  init();
+  animate()
+  traceOrbits()
+
+  // @ts-ignore
+  document.querySelector("div#over-canvas").style.animation = 'fadeIn 1s forwards';
+  // @ts-ignore
+  document.querySelector("div#resources").style.animation = 'fadeOut 1s forwards';
+  setTimeout(() => {
+    // @ts-ignore
+    document.querySelector("div#resources").style.display = 'none';
+  }, 1000);
+};
+
+loadingManager.onError = (url) => {
+  console.log(`❌ Error cargando: ${url}`);
+};
+
+const textureLoader = new THREE.TextureLoader(loadingManager);
+let textures = [
+  "blanco.png",
+  "earthMap.png",
+  "galaxy.png",
+  "JupiterMap.jpg",
+  "logo.png",
+  "lunasGenericasMap.jpg",
+  "marsMap.jpg",
+  "mercuryMap.jpg",
+  "moon.jpg",
+  "neptuneMap.jpg",
+  "PIA00342~medium.jpg",
+  "rings.jpg",
+  "rings2.jpg",
+  "roundearth.png",
+  "saturnMap.jpg",
+  "saturnRingsMap.png",
+  "skybox.png",
+  "space-background.webp",
+  "sun.jpg",
+  "uranusMap.jpg",
+  "venusMap.jpg",
+];
+
+textures.forEach(texture => {
+  textureLoader.load(`${texture}`);
+});
+
+
+
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
@@ -85,6 +146,37 @@ function init() {
     searchBar = document.querySelector('input#body-search')!;
     similaritiesList = document.querySelector('div#similarities')!;
     similaritiesListObjects = document.querySelector('div#similarities-object')!;
+    dateText = document.querySelector('p#current-time-text')!;
+    inputDate = document.querySelector('input#time-slider')!;
+    timeScaleText = document.querySelector('p#time-scale');
+
+    dateText.textContent = epoch.toDateString();
+
+    inputDate.addEventListener('input', () => {
+      simulatedTime();
+      if (celestialBodyList) {
+        celestialBodyList.getCelestialBodies().forEach(celestialBody => {
+          celestialBody.setRotationSpeed(celestialBody.initialRotationBySecond * simSpeed * 2592000 / 32);
+        });
+      }
+    });
+
+    function simulatedTime() {
+      let value = Number(inputDate.value);
+      value = value - 50;
+      if (value < 0) {
+        simSpeed = -simSpeedAbs * Math.pow(2, -value / 2);
+        simSpeedPrint = -simSpeedAbs * Math.pow(2, value / 2) * 40;
+      } else {
+        simSpeed = simSpeedAbs * Math.pow(2, value / 2);
+        simSpeedPrint = simSpeedAbs * Math.pow(2, value / 2) * 40;
+      }
+
+      timeScaleText.innerHTML = simSpeedPrint.toFixed(2).toString() + " days / sec";
+      console.log(simSpeed)
+    }
+
+    simulatedTime();
 
     similaritiesList.style.display = 'none';
 
@@ -139,25 +231,6 @@ function init() {
     });
   }
 
-  // ===== 👨🏻‍💼 LOADING MANAGER =====
-  {
-    loadingManager = new LoadingManager()
-
-    loadingManager.onStart = () => {
-      console.log('loading started')
-    }
-    loadingManager.onProgress = (url, loaded, total) => {
-      console.log('loading in progress:')
-      console.log(`${url} -> ${loaded} / ${total}`)
-    }
-    loadingManager.onLoad = () => {
-      console.log('loaded!')
-    }
-    loadingManager.onError = () => {
-      console.log('❌ error while loading')
-    }
-  }
-
   // ===== 💡 LIGHTS =====
   {
     ambientLight = new AmbientLight('white', 0.05)
@@ -177,7 +250,7 @@ function init() {
   // ===== 🎥 CAMERA =====
   {
     camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, renderSize * 8)
-    camera.position.set(2*Util.SIZE_SCALER, 2*Util.SIZE_SCALER, 5*Util.SIZE_SCALER)
+    camera.position.set(2 * Util.SIZE_SCALER, 2 * Util.SIZE_SCALER, 5 * Util.SIZE_SCALER)
 
     cameraControls = new CameraControls(camera, renderer.domElement);
     cameraControls.dampingFactor = 0.1;
@@ -188,10 +261,12 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    skybox = new Skybox(0, 0, 0, renderSize / 1.5, camera);
+    skybox = new Skybox(0, 0, 0, renderSize / 1.5);
     scene.add(...skybox.getMesh());
 
     skybox.galaxyVisible.subscribe((bool) => {
+      if (celestialBodyList === undefined) return;
+
       celestialBodyList.getCelestialBodies().forEach((body) => {
         body.mesh.visible = !bool;
         body.traceOrbits()
@@ -201,7 +276,7 @@ function init() {
         orbitLines.forEach((line) => {
           scene.remove(line);
         });
-      }else{
+      } else {
         orbitLines.forEach((line) => {
           scene.add(line);
         });
@@ -218,7 +293,6 @@ function init() {
         1,
         new Vector3(1, 1, 1),
         new Vector3(0, 0, 0),
-        null,
         0,
         new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
         0,
@@ -227,6 +301,8 @@ function init() {
         0,
         0,
         0xFDB813,
+        0.000072921158553,
+        new Euler(0, 0, 0, 'XYZ'),
         false
     );
 
@@ -238,7 +314,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         1.00000018,
         new Date(Date.UTC(2024, 1, 4, 0, 0, 0)),
         0.01673163,
@@ -247,67 +322,72 @@ function init() {
         100.46691572,
         -0.00054346,
         0x22ABDF,
+        0.000072921158553,
+        new Euler(0.4396, 0.8641, 5.869, "XYZ"),
         true
     )
 
     let mars = new CelestialBody(
-      "Mars",
-      3389.5,
-      6.39e23,
-      "marsMap.jpg",
-      1,
-      new Vector3(0, 0, 0),
-      new Vector3(0, 0, 0),
-      null,
-      1.52371034,
-      new Date(Date.UTC(2000, 0, 1, 0, 0 ,0)),
-      0.09339410,
-      -23.94362959,
-      49.55953891,
-      -4.55343205,
-      1.84969142,
-      0xFF5E33,
-      true
+        "Mars",
+        3389.5,
+        6.39e23,
+        "marsMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        1.52371034,
+        new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
+        0.09339410,
+        -23.94362959,
+        49.55953891,
+        -4.55343205,
+        1.84969142,
+        0xFF5E33,
+        0.00007088222,
+        new Euler(0.4396, 0.8641, 5.869, "XYZ"),
+        true
     )
 
     let jupiter = new CelestialBody(
-      "Jupiter",
-      69911,
-      1.898e27,
-      "JupiterMap.jpg",
-      1,
-      new Vector3(0, 0, 0),
-      new Vector3(0, 0, 0),
-      null,
-      5.20288700,
-      new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
-      0.04838624,
-      14.72847983,
-      100.47390909,
-      34.39644051,
-      1.30439695,
-      0xA2440A,
-      true
+        "Jupiter",
+        69911,
+        1.898e27,
+        "JupiterMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        5.20288700,
+        new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
+        0.04838624,
+        14.72847983,
+        100.47390909,
+        34.39644051,
+        1.30439695,
+        0xA2440A,
+        0.00017538081,
+        new Euler(0.0545, 1.7541, 0.2575, "XYZ"),
+        true
     );
 
     let venus = new CelestialBody(
-      "Venus",
-      6051.8,
-      4.867e24,
-      "venusMap.jpg",
-      1,
-      new Vector3(0, 0, 0),
-      new Vector3(0, 0, 0),
-      null,
-      0.72332102,
-      new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
-      0.00676399,
-      131.76755713,
-      76.67261496,
-      181.97970850,
-      3.39777545,
-      0xD8B712,
-      true
+        "Venus",
+        6051.8,
+        4.867e24,
+        "venusMap.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        0.72332102,
+        new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
+        0.00676399,
+        131.76755713,
+        76.67261496,
+        181.97970850,
+        3.39777545,
+        0xD8B712,
+        0.0000002994132,
+        new Euler(3.0960, 1.3383, 0.9578, "XYZ"),
+        true
     );
 
     let saturn = new CelestialBody(
@@ -318,7 +398,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         9.53667594,
         new Date(Date.UTC(1944, 8, 7, 0, 0, 0)),
         0.05386179,
@@ -327,8 +406,15 @@ function init() {
         49.95424423,
         2.48599187,
         0xF6D624,
-        true
-        );
+        0.00016329833,
+        new Euler(0.4665, 1.9839, 0.4574, "XYZ"),
+        true,
+        {
+          ringTexture: "rings2.jpg",
+          innerRadiusMult: 1.2,
+          outerRadiusMult: 2.0
+        } as IRing
+    );
 
     let mercury = new CelestialBody(
         "Mercury",
@@ -338,7 +424,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         0.38709927,
         new Date(Date.UTC(2021, 3, 27, 0, 0, 0)),
         0.20563593,
@@ -347,6 +432,8 @@ function init() {
         252.25032350,
         7.00497902,
         0xA195A8,
+        0.00000123854412,
+        new Euler(0.000593, 0.844493, 0.852917, "XYZ"),
         true
     );
 
@@ -358,7 +445,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         19.18916464,
         new Date(Date.UTC(1966, 5, 2, 0, 0, 0)),
         0.04725744,
@@ -367,6 +453,8 @@ function init() {
         313.23810451,
         0.77263783,
         0x949AFF,
+        -0.00010104518,
+        new Euler(1.7074, 1.2915, 2.9839, "XYZ"),
         true
     );
 
@@ -378,7 +466,6 @@ function init() {
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
-        null,
         30.06992276,
         new Date(Date.UTC(2042, 8, 15, 0, 0, 0)),
         0.00859048,
@@ -387,6 +474,8 @@ function init() {
         -55.12002969,
         1.77004347,
         0x3339FF,
+        0.00010865669,
+        new Euler(0.4947, 2.2994, 0.7848, "XYZ"),
         true
     );
 
@@ -427,7 +516,6 @@ function init() {
     scene.add(...celestialBodyList.getMeshes());
     let bodyList = celestialBodyList.getCelestialBodies();
     for (let body of bodyList) {
-      // Asegúrate de que 'marker' es una propiedad del objeto 'body'
       if (body.marker) {
         scene.add(body.marker);
       }
@@ -451,21 +539,14 @@ function init() {
       if (!body) return;
 
       cameraControls.setPosition(
-          body.getPosition().x,
-          body.getPosition().y,
-          body.getPosition().z,
-          true
+          selectedBody.getValue().getPosition().x,
+          selectedBody.getValue().getPosition().y,
+          selectedBody.getValue().getPosition().z,
+          false
       )
 
       selectedBodyFullyTransitioned = true;
     });
-
-    // Full screen
-    window.addEventListener('dblclick', (event) => {
-      if (event.target === canvas) {
-        toggleFullScreen(canvas)
-      }
-    })
   }
 
   // ===== 🪄 HELPERS =====
@@ -485,51 +566,15 @@ function init() {
     stats = new Stats()
     document.body.appendChild(stats.dom)
   }
-
-  // ==== 🐞 DEBUG GUI ====
-  {
-    gui = new GUI({
-      title: '🐞 Debug GUI', width: 300,
-      autoPlace: false,
-    });
-    document.getElementById('gui-container')!.appendChild(gui.domElement);
-
-    const lightsFolder = gui.addFolder('Lights')
-    lightsFolder.add(pointLight, 'visible').name('point light')
-    lightsFolder.add(ambientLight, 'visible').name('ambient light')
-
-    const helpersFolder = gui.addFolder('Helpers')
-    helpersFolder.add(axesHelper, 'visible').name('axes')
-    helpersFolder.add(pointLightHelper, 'visible').name('pointLight')
-
-    const cameraFolder = gui.addFolder('Camera')
-    cameraFolder.add(cameraControls, 'autoRotate')
-
-    // persist GUI state in local storage on changes
-    gui.onFinishChange(() => {
-      const guiState = gui.save()
-      localStorage.setItem('guiState', JSON.stringify(guiState))
-    })
-
-    // load GUI state if available in local storage
-    const guiState = localStorage.getItem('guiState')
-    if (guiState) gui.load(JSON.parse(guiState))
-
-    // reset GUI state button
-    const resetGui = () => {
-      localStorage.removeItem('guiState')
-      gui.reset()
-    }
-    gui.add({resetGui}, 'resetGui').name('RESET')
-
-    gui.close()
-  }
 }
 
 function traceOrbits() {
   CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
     let line = celestialBody.traceOrbits();
     orbitLines.push(line);
+    orbitLines.forEach((line) => {
+      scene.add(line);
+    });
   })
 }
 
@@ -538,8 +583,6 @@ function animate() {
 
   const delta = clock.getDelta();
   stats.update();
-
-  date = simulatedTime.getSimulatedTime(500000);
 
   // Actualizar los cuerpos celestes
   CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
@@ -556,16 +599,15 @@ function animate() {
         false
     )
     cameraControls.setTarget(
-          selectedBody.getValue().getPosition().x,
-          selectedBody.getValue().getPosition().y,
-          selectedBody.getValue().getPosition().z,
-          false
-      )
+        selectedBody.getValue().getPosition().x,
+        selectedBody.getValue().getPosition().y,
+        selectedBody.getValue().getPosition().z,
+        false
+    )
 
   }
 
 
-    
   cameraControls.update(delta);
 
   // Redimensionar si es necesario
@@ -583,10 +625,12 @@ function updateTheDate() {
   if (simSpeed == 1) {
     epoch = new Date(Date.now());            // At maximum speed, increment calendar by a day for each clock-cycle.
   } else if (0 > simSpeed) {
-      epoch.setDate(epoch.getDate() - simSpeed * 24 * 3600000)
-  } else if (simSpeed == 0){
-      epoch.setDate(Date.now());
-  } else {  epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000) ; }  // 24 hours * milliseconds in an hour * simSpeed 
-    
-  }
+    epoch.setDate(epoch.getDate() - simSpeed * 24 * 3600000)
+  } else if (simSpeed == 0) {
+    epoch.setDate(Date.now());
+  } else {
+    epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000);
+  }  // 24 hours * milliseconds in an hour * simSpeed
+
+}
 

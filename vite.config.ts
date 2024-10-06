@@ -16,7 +16,6 @@ export default defineConfig({
         main: path.resolve(__dirname, 'index.html'),
         learn: path.resolve(__dirname, 'learn-more.html'),
         map: path.resolve(__dirname, 'map.html'),
-        transition: path.resolve(__dirname, 'transition.html'),
       }
     }
   }

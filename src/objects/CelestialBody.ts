@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import {FrontSide} from 'three';
+import {Euler, FrontSide, Vector3} from 'three';
 import {CelestialBodyList} from './CelestialBodyList';
-import {Util} from "./Util";
+import {IRing, Util} from "./Util";
 
 export class CelestialBody {
     name: string;
@@ -12,7 +12,6 @@ export class CelestialBody {
     position: THREE.Vector3;  // Posición en el espacio (x, y, z)
     velocity: THREE.Vector3;  // Velocidad (puede ser opcional)
     mesh: THREE.Mesh;         // Representación visual en Three.js
-    orbitCenter: CelestialBody | null;  // Centro alrededor del cual orbita, si aplica
     semiMajorAxis: number;
     t0: Date;
     e: number;
@@ -27,6 +26,10 @@ export class CelestialBody {
     trueAnomalyS: number;
     orbitColor: THREE.ColorRepresentation;
     marker: THREE.Mesh;
+    rotationBySecond: number;
+    initialRotationBySecond: number;
+    axisInclicnation: Euler;
+    ringMesh: THREE.Mesh | undefined;
 
 
     constructor(
@@ -37,7 +40,6 @@ export class CelestialBody {
         time: number,
         initialPosition: THREE.Vector3,
         initialVelocity: THREE.Vector3,
-        orbitCenter: CelestialBody | undefined,
         a: number,
         t0: Date,
         e: number,
@@ -46,8 +48,10 @@ export class CelestialBody {
         meanLongitude: number,
         inclination: number,
         orbitColor: THREE.ColorRepresentation,
+        rotation: number,
+        axis: Euler,
         castShadow: boolean = false,
-        emissive: number = 0x000000
+        ring: IRing | undefined = undefined
     ) {
         this.name = name;
         this.radius = Util.KmtoAU(radius)*10000;
@@ -55,11 +59,6 @@ export class CelestialBody {
         this.time = time;
         this.position = initialPosition;
         this.velocity = initialVelocity;
-        if (orbitCenter === undefined) {
-            this.orbitCenter = null;
-        } else {
-            this.orbitCenter = orbitCenter;
-        }
         this.semiMajorAxis = a;
         this.t0 = t0;
         this.e = e;
@@ -73,6 +72,9 @@ export class CelestialBody {
         this.period = Math.sqrt(Math.pow(this.semiMajorAxis, 3));
         this.trueAnomalyS = 0;
         this.orbitColor = orbitColor;
+        this.rotationBySecond = rotation;
+        this.initialRotationBySecond = rotation;
+        this.axisInclicnation = axis;
 
         const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
         if (typeof texture === 'string') {
@@ -87,7 +89,6 @@ export class CelestialBody {
             material = new THREE.MeshLambertMaterial({
                 map: this.texture,
                 side: FrontSide,
-                emissive: emissive,
                 emissiveIntensity: 0.2
             });
         } else {
@@ -98,11 +99,33 @@ export class CelestialBody {
         }
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
+        this.mesh.rotation.copy(this.axisInclicnation);
 
-        const markerGeometry = new THREE.SphereGeometry(10, 16, 16);  
+        const markerGeometry = new THREE.SphereGeometry(10, 16, 16);
         const markerMaterial = new THREE.MeshBasicMaterial({ color: orbitColor, transparent: true, opacity: 0.5 });
         this.marker = new THREE.Mesh(markerGeometry, markerMaterial);
-        this.marker.position.copy(this.position); 
+        this.marker.position.copy(this.position);
+
+        if (ring !== undefined) {
+            let ringGeometry = new THREE.RingGeometry(this.radius * ring.innerRadiusMult, this.radius * ring.outerRadiusMult, 32);
+            let ringMaterial = new THREE.MeshBasicMaterial({
+                map: new THREE.TextureLoader().load(ring.ringTexture),
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5
+            });
+            let ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+            ringMesh.rotation.x = Math.PI / 2;
+            ringMesh.position.copy(this.position);
+
+            ringMesh.castShadow = true;
+            ringMesh.receiveShadow = true;
+
+            this.ringMesh = ringMesh;
+            ringMesh.receiveShadow = true;
+
+            this.mesh.children.push(ringMesh);
+        }
 
         CelestialBodyList.getInstance().addCelestialBody(this);
     }
@@ -111,7 +134,7 @@ export class CelestialBody {
     update(date: Date, simSpeed : number, distanceFromCamera : number) {
         
         let vector = this.calculateOrbitPosition(date, simSpeed);
-        // console.log(vector);
+        //console.log(vector);
 
          // Tamaño base del marcador
         const baseSize = 1;
@@ -119,17 +142,24 @@ export class CelestialBody {
         // Calcular el tamaño del marcador en función de la distancia
         const scaleFactor = baseSize * (distanceFromCamera / 3000);
         this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        
+        this.mesh.rotation.copy(new Euler(this.mesh.rotation.x, this.mesh.rotation.y + this.rotationBySecond , this.mesh.rotation.z, "XZY"))
 
         if (this.name === "Sun") {
             this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
             this.marker.position.set(0,0,0);
             return;
         }
-        this.marker.position.copy(vector);
-        
-        this.mesh.position.copy(vector);
-    }
 
+        this.marker.position.copy(vector);
+        this.mesh.position.copy(vector);
+        if (this.ringMesh !== undefined){
+            this.mesh.children[0].position.copy( new Vector3(vector.x, vector.y, vector.z));
+
+        }
+        // console.log(this.mesh.rotation.y)
+        // console.log(this.rotationBySecond)
+    }
     // Función de placeholder para las ecuaciones de Kepler
     calculateOrbitPosition(date: Date , simSpeed : number): THREE.Vector3 {
 
@@ -154,27 +184,27 @@ export class CelestialBody {
 
             var currentPosition = [] ;
             var deltaTime = 0 ;
-                
+
            // Calculate mean motion n:
                var n = (2 * Math.PI) / (this.period * 365.25) ;   // radians per day
-               
+
            // Calculate Eccentric Anomaly E based on the orbital eccentricity and previous true anomaly:
               var e = this.e ;
-              var f = this.trueAnomalyS;         
+              var f = this.trueAnomalyS;
               var eA = this.trueToEccentricAnomaly(e,f)            // convert from true anomaly to eccentric anomaly
-              
-           // Calculate current Mean Anomaly	
-              var m0 = eA - e * Math.sin(eA);	
-             
+
+           // Calculate current Mean Anomaly
+              var m0 = eA - e * Math.sin(eA);
+
               deltaTime = simSpeed * n
-      
+
            // Update Mean anomaly by adding the Mean Anomaly at Epoch to the mean motion * delaTime
                var mA = deltaTime + m0
-              
+
               this.time = this.time +  deltaTime // increment timer
-      
-              eA = this.eccentricAnomaly (e, mA) 
-              var trueAnomaly = this.eccentricToTrueAnomaly(e, eA) 
+
+              eA = this.eccentricAnomaly (e, mA)
+              var trueAnomaly = this.eccentricToTrueAnomaly(e, eA)
               this.trueAnomalyS = trueAnomaly
 
               var xCart = pos[0]*Util.SIZE_SCALER;
@@ -222,7 +252,7 @@ export class CelestialBody {
             let i = 0.0;
         
             // Loop to propagate the orbit positions
-            while (i <= Math.PI * 2) {
+            while (i <= Math.PI * 2.001) {
                 const pos = this.propagate(i);  // Propagate the orbit to get the position
         
                 orbPos.push(new THREE.Vector3(pos[1]*Util.SIZE_SCALER, pos[2]*Util.SIZE_SCALER, pos[0]*Util.SIZE_SCALER));
@@ -324,7 +354,7 @@ export class CelestialBody {
     trueToEccentricAnomaly(e,f) {
         // http://mmae.iit.edu/~mpeet/Classes/MMAE441/Spacecraft/441Lecture19.pdf slide 7 
         var eccentricAnomaly = 2* Math.atan(Math.sqrt((1-e)/(1+e))* Math.tan(f/2));
-            
+
         return eccentricAnomaly ;
     }
 
@@ -371,5 +401,13 @@ export class CelestialBody {
   getRadius() {
     return this.radius;
   }
-}
 
+    getRotationSpeed() {
+        return this.rotationBySecond;
+    }
+
+    setRotationSpeed(number: number) {
+        console.log("rotation aaaaaaaa", number)
+        this.rotationBySecond = number;
+    }
+}

@@ -13,14 +13,11 @@ export class Skybox {
 
     galaxyVisible: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false)
 
-    private camera: THREE.Camera
-
     constructor(
         x: number=0,
         y: number=0,
         z: number=0,
         radius: number=100,
-        camera: THREE.Camera,
     ) {
         this.skyboxGeometry = new THREE.SphereGeometry(radius, 32, 32)
         this.skyboxMaterial = new THREE.MeshBasicMaterial({
@@ -40,9 +37,7 @@ export class Skybox {
             opacity: 1,
         })
         this.galaxyMesh = new THREE.Mesh(this.galaxyGeometry, this.galaxyMaterial)
-        this.galaxyMesh.position.set(x, y + 75000, z)
-
-        this.camera = camera
+        this.galaxyMesh.position.set(x, y + 25500000, z)
 
         this.showGalaxy(false);
     }
@@ -52,6 +47,10 @@ export class Skybox {
     }
 
     showGalaxy(bool: boolean) {
+        if (bool === this.galaxyMesh.visible) {
+            return;
+        }
+
         this.galaxyVisible.next(bool)
 
         this.galaxyMesh.visible = bool
