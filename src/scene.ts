@@ -323,6 +323,7 @@ function init() {
 
 
 function animate() {
+  console.log("Animate function called"); // Add this line
 
   requestAnimationFrame(animate)
 
