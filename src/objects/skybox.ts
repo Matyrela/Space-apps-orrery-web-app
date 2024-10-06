@@ -23,7 +23,7 @@ export class Skybox {
     ) {
         this.skyboxGeometry = new THREE.SphereGeometry(radius, 32, 32)
         this.skyboxMaterial = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('/skybox.png'),
+            map: new THREE.TextureLoader().load("skybox.png"),
             side: THREE.BackSide,
             transparent: false,
         })
@@ -33,7 +33,7 @@ export class Skybox {
 
         this.galaxyGeometry = new THREE.PlaneGeometry(radius*8, radius*8)
         this.galaxyMaterial = new THREE.MeshBasicMaterial({
-            map: new THREE.TextureLoader().load('/galaxy.png'),
+            map: new THREE.TextureLoader().load("galaxy.png"),
             side: THREE.DoubleSide,
             transparent: false,
             opacity: 1,

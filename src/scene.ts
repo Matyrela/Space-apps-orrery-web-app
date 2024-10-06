@@ -26,6 +26,9 @@ import {CelestialBody} from "./objects/CelestialBody";
 import {SimulatedTime} from "./objects/SimulatedTime";
 import { BehaviorSubject } from 'rxjs'
 import {Easing, Group, Tween} from '@tweenjs/tween.js'
+const baseUrl = import.meta.env.MODE === 'production'
+    ? '/Space-apps-orrery-web-app/'
+    : '/';
 
 const CANVAS_ID = 'scene'
 
@@ -198,7 +201,7 @@ function init() {
         "Earth",
         0.1,
         5.972e24,
-        "/earthMap.png",
+        "earthMap.png",
         1,
         new Vector3(0, 0, 0),
         new Vector3(0, 0, 0),
@@ -218,7 +221,7 @@ function init() {
         "Pelota",
         0.5,
         1,
-        '/blanco.png',
+        "blanco.png",
         1,
         new Vector3(1, 1, 1),
         new Vector3(0, 0, 0),
