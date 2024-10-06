@@ -24,6 +24,6 @@ export class Util {
     static SUNMASS = 1.989e30;
     static GRAVITATIONALCONSTANT = 6.67430e-11;
     static AU = 1.496e8
-    static SIZE_SCALER = 10
+    static SIZE_SCALER = 10000
     static TOL = 1e-6;
 }

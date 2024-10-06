@@ -109,19 +109,25 @@ export class CelestialBody {
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
     update(date: Date, simSpeed : number, distanceFromCamera : number) {
-        // Aquí iría la actualización de la posición basándose en las ecuaciones de Kepler
+        
         let vector = this.calculateOrbitPosition(date, simSpeed);
         console.log(vector);
 
          // Tamaño base del marcador
-        const baseSize = 1; // Puedes ajustar este valor según lo que desees
+        const baseSize = 1;
 
         // Calcular el tamaño del marcador en función de la distancia
-        const scaleFactor = baseSize * (distanceFromCamera / 1000);
+        const scaleFactor = baseSize * (distanceFromCamera / 3000);
         this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-        this.mesh.position.copy(vector);
+        if (this.name === "Sun") {
+            this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
+            this.marker.position.set(0,0,0);
+            return;
+        }
         this.marker.position.copy(vector);
+        
+        this.mesh.position.copy(vector);
     }
 
     // Función de placeholder para las ecuaciones de Kepler
@@ -220,11 +226,8 @@ export class CelestialBody {
                 const pos = this.propagate(i);  // Propagate the orbit to get the position
         
                 orbPos.push(new THREE.Vector3(pos[1]*Util.SIZE_SCALER, pos[2]*Util.SIZE_SCALER, pos[0]*Util.SIZE_SCALER));
-                
-    // Add the vertex to the array
-               
         
-                i += 0.0785;  // Increment the orbit angle
+                i += 0.001;  // Increment the orbit angle
             }
             
            
