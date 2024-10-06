@@ -133,7 +133,7 @@ export class CelestialBody {
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
     update(date: Date, simSpeed : number, distanceFromCamera : number) {
-
+        
         let vector = this.calculateOrbitPosition(date, simSpeed);
         console.log(vector);
 
@@ -210,7 +210,7 @@ export class CelestialBody {
               return new THREE.Vector3(yCart, zCart, xCart);
             }
 
-
+        
 
 
     propagate(uA){
@@ -238,7 +238,7 @@ export class CelestialBody {
 
         return pos ;
         }
-
+    
         traceOrbits() {
             // Generate line segments from points around the trajectory of the orbiting objects.
             // Use BufferGeometry for creating the line geometry
@@ -246,26 +246,26 @@ export class CelestialBody {
             const material = new THREE.LineBasicMaterial({ color: this.orbitColor });
             const orbPos = [];
             let i = 0.0;
-
+        
             // Loop to propagate the orbit positions
             while (i <= Math.PI * 2) {
                 const pos = this.propagate(i);  // Propagate the orbit to get the position
-
+        
                 orbPos.push(new THREE.Vector3(pos[1]*Util.SIZE_SCALER, pos[2]*Util.SIZE_SCALER, pos[0]*Util.SIZE_SCALER));
-
+        
                 i += 0.001;  // Increment the orbit angle
             }
-
-
+            
+           
             // Set the vertices array to the BufferGeometry
             geometry.setFromPoints(orbPos);
-
+        
             // Create the line object for the orbit trace
             const line = new THREE.Line(geometry, material);
-
+        
             const orbitName = this.name + "_trace";
             line.name = orbitName;
-
+        
             return line;  // Return the line if you want to add it to the scene later
         }
 
@@ -273,14 +273,14 @@ export class CelestialBody {
             // Create a sphere to represent the planet's position
             let sphereGeometry = new THREE.SphereGeometry(100, 32, 32);  // Small dot with radius 0.5
             let sphereMaterial = new THREE.MeshBasicMaterial({ color: this.orbitColor, transparent: true, opacity: 0.5 });  // Same color, semi-transparent
-
+        
             // Create the sphere mesh and position it at the planet's current coordinates
             let planetMarker = new THREE.Mesh(sphereGeometry, sphereMaterial);
             planetMarker.position.set(pos[0], pos[1], pos[2]);
 
             return planetMarker;
         }
-
+    
     //T en segundos
     orbitalTime(): number {
         let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));
@@ -359,8 +359,8 @@ export class CelestialBody {
         var trueAnomaly = 2 * Math.atan(Math.sqrt((1+e)/(1-e))* Math.tan(E/2));
         return trueAnomaly
     }
-
-
+    
+    
     calculateElapsedTime(t0: Date) {
         let actualTime = new Date().getTime();
         let elapsedTime = actualTime - t0.getTime();
