@@ -390,6 +390,30 @@ function init() {
         true
     );
 
+    let asteroids = Util.CSVToArray("data/dataset.csv");
+
+    asteroids.forEach((asteroid) => {
+      let asteroidBody = new CelestialBody(
+          asteroid.name,
+          asteroid.diameter / 2,
+          asteroid.gm / Util.GRAVITATIONALCONSTANT,
+          "lunasGenericasMap.jpg",
+          1,
+          new Vector3(0, 0, 0),
+          new Vector3(0, 0, 0),
+          null,
+          asteroid.a,
+          new Date(Date.UTC((asteroid.tp))),
+          asteroid.e,
+          asteroid.q,
+          asteroid.om,
+          asteroid.w,
+          asteroid.ma,
+          0x3339FF,
+          true
+      );
+    })
+
     scene.add(...celestialBodyList.getMeshes());
     let bodyList = celestialBodyList.getCelestialBodies();
     for (let body of bodyList) {

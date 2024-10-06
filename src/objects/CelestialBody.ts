@@ -111,7 +111,7 @@ export class CelestialBody {
     update(date: Date, simSpeed : number, distanceFromCamera : number) {
         
         let vector = this.calculateOrbitPosition(date, simSpeed);
-        console.log(vector);
+        // console.log(vector);
 
          // Tamaño base del marcador
         const baseSize = 1;

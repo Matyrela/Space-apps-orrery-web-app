@@ -1,3 +1,9 @@
+import Papa, {ParseResult} from "papaparse";
+import {NearEarthObject, NEO} from "./NEO";
+import {CelestialBody} from "./CelestialBody";
+import {CelestialBodyList} from "./CelestialBodyList";
+import {map} from "rxjs";
+
 export class Util {
     static dateToJulianDate(date: Date): number {
         let y = date.getUTCFullYear() + 8000;
@@ -20,6 +26,20 @@ export class Util {
         return km/(1.496e8);
     }
 
+    static CSVToArray( csvPath: string) : NEO[] {
+        console.log("start parse")
+        let i = 0;
+        Papa.parse(csvPath, {
+            header: true,
+            download: true,
+            skipEmptyLines: true,
+            delimiter: ";",
+            complete: function (results) {
+                return results;
+            }
+        })
+        return [];
+    }
 
     static SUNMASS = 1.989e30;
     static GRAVITATIONALCONSTANT = 6.67430e-11;
