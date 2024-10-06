@@ -93,7 +93,7 @@ function init() {
       simulatedTime();
       if (celestialBodyList){
         celestialBodyList.getCelestialBodies().forEach(celestialBody => {
-          celestialBody.setRotationSpeed(celestialBody.getRotationSpeed() * simSpeedAbs * 2592000 * 1.2);
+          celestialBody.setRotationSpeed(celestialBody.initialRotationBySecond * simSpeed * 2592000 / 32);
         });
       }
     });
@@ -460,10 +460,10 @@ function init() {
       if (!body) return;
 
       cameraControls.setPosition(
-          body.getPosition().x,
-          body.getPosition().y,
-          body.getPosition().z,
-          true
+          selectedBody.getValue().getPosition().x,
+          selectedBody.getValue().getPosition().y,
+          selectedBody.getValue().getPosition().z,
+          false
       )
 
       selectedBodyFullyTransitioned = true;

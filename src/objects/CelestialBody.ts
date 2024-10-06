@@ -27,6 +27,7 @@ export class CelestialBody {
     orbitColor: THREE.ColorRepresentation;
     marker: THREE.Mesh;
     rotationBySecond: number;
+    initialRotationBySecond: number;
     axisInclicnation: Euler;
     ringMesh: THREE.Mesh | undefined;
 
@@ -72,6 +73,7 @@ export class CelestialBody {
         this.trueAnomalyS = 0;
         this.orbitColor = orbitColor;
         this.rotationBySecond = rotation;
+        this.initialRotationBySecond = rotation;
         this.axisInclicnation = axis;
 
         const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
@@ -140,8 +142,8 @@ export class CelestialBody {
         // Calcular el tamaño del marcador en función de la distancia
         const scaleFactor = baseSize * (distanceFromCamera / 3000);
         this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-        this.mesh.rotation.y += this.rotationBySecond;
+        
+        this.mesh.rotation.copy(new Euler(this.mesh.rotation.x, this.mesh.rotation.y + this.rotationBySecond , this.mesh.rotation.z, "XZY"))
 
         if (this.name === "Sun") {
             this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
@@ -250,7 +252,7 @@ export class CelestialBody {
             let i = 0.0;
         
             // Loop to propagate the orbit positions
-            while (i <= Math.PI * 2.1) {
+            while (i <= Math.PI * 2.001) {
                 const pos = this.propagate(i);  // Propagate the orbit to get the position
         
                 orbPos.push(new THREE.Vector3(pos[1]*Util.SIZE_SCALER, pos[2]*Util.SIZE_SCALER, pos[0]*Util.SIZE_SCALER));
