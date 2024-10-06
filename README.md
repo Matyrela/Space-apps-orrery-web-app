@@ -9,7 +9,7 @@ Explore the solar system with real-time data from NASA's API and learn more abou
 
 ## Demo
 You can visit the deployed version of the project here:  
-[**NeoNavigator Orrery**]([https://your-username.github.io/NeoNavigator-Orrery/](https://matyrela.github.io/Space-apps-orrery-web-app/))
+[**NeoNavigator Orrery**](https://matyrela.github.io/Space-apps-orrery-web-app/)
 
 ---
 
