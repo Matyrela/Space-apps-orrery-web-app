@@ -19,7 +19,6 @@ import './style-map.css'
 import {Skybox} from "./objects/skybox";
 import {CelestialBodyList} from "./objects/CelestialBodyList";
 import {CelestialBody} from "./objects/CelestialBody";
-import {SimulatedTime} from "./objects/SimulatedTime";
 import {BehaviorSubject} from 'rxjs'
 import {Util} from './objects/Util';
 
@@ -50,16 +49,18 @@ let orbitLines = []
 let searchBar: HTMLInputElement
 let similaritiesList: HTMLDivElement
 let similaritiesListObjects: HTMLDivElement
+let dateText: HTMLParagraphElement
+let inputDate: HTMLInputElement
+let timeScaleText: HTMLParagraphElement
 
 let skybox: Skybox
 let celestialBodyList: CelestialBodyList
 
-let simulatedTime = new SimulatedTime();
-let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
-let newDate = new Date();
 //Global Variables
 let epoch = new Date(Date.now());  // start the calendar 
-let simSpeed = 1/2592000;
+let simSpeedAbs = 1/2592000;
+let simSpeed = 1;
+let simSpeedPrint = 0;
 let distanceFromCamera = 0;
 
 //a revisar
@@ -82,6 +83,32 @@ function init() {
     searchBar = document.querySelector('input#body-search')!;
     similaritiesList = document.querySelector('div#similarities')!;
     similaritiesListObjects = document.querySelector('div#similarities-object')!;
+    dateText = document.querySelector('p#current-time-text')!;
+    inputDate = document.querySelector('input#time-slider')!;
+    timeScaleText = document.querySelector('p#time-scale')
+
+    dateText.textContent = epoch.toDateString();
+
+    inputDate.addEventListener('input', () => {
+      simulatedTime();
+
+    });
+
+    function simulatedTime(){
+      let value = Number(inputDate.value);
+      value = value - 50;
+      if (value < 0) {
+        simSpeed = -simSpeedAbs * Math.pow(2, -value / 2);
+        simSpeedPrint = -simSpeedAbs * Math.pow(2, value / 2) * 40;
+      }else{
+        simSpeed = simSpeedAbs * Math.pow(2, value / 2);
+        simSpeedPrint = simSpeedAbs * Math.pow(2, value / 2) * 40;
+      }
+      
+      timeScaleText.innerHTML = simSpeedPrint.toFixed(2).toString() + " days / sec";
+      console.log(simSpeed)
+    }
+    simulatedTime();
 
     similaritiesList.style.display = 'none';
 
@@ -185,10 +212,12 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    skybox = new Skybox(0, 0, 0, renderSize / 1.5, camera);
+    skybox = new Skybox(0, 0, 0, renderSize / 1.5);
     scene.add(...skybox.getMesh());
 
     skybox.galaxyVisible.subscribe((bool) => {
+      if (celestialBodyList === undefined) return;
+
       celestialBodyList.getCelestialBodies().forEach((body) => {
         body.mesh.visible = !bool;
         body.traceOrbits()
@@ -390,7 +419,6 @@ function init() {
     scene.add(...celestialBodyList.getMeshes());
     let bodyList = celestialBodyList.getCelestialBodies();
     for (let body of bodyList) {
-      // Asegúrate de que 'marker' es una propiedad del objeto 'body'
       if (body.marker) {
         scene.add(body.marker);
       }
@@ -447,6 +475,9 @@ function traceOrbits() {
   CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
     let line = celestialBody.traceOrbits();
     orbitLines.push(line);
+    orbitLines.forEach((line) => {
+      scene.add(line);
+    });
   })
 }
 
@@ -455,8 +486,6 @@ function animate() {
 
   const delta = clock.getDelta();
   stats.update();
-
-  date = simulatedTime.getSimulatedTime(500000);
 
   // Actualizar los cuerpos celestes
   CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
