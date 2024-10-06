@@ -70,7 +70,7 @@ const animation = { enabled: true, play: true }
 
 init()
 animate()
-traceOrbits()
+//traceOrbits()
 
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
@@ -390,29 +390,39 @@ function init() {
         true
     );
 
-    let asteroids = Util.CSVToArray("data/dataset.csv");
+    async function processAsteroids() {
+      try {
+        // Esperamos a que la promesa se resuelva con await
+        let asteroids = await Util.CSVToArray("data/dataset.csv");
+        console.log(asteroids);
 
-    asteroids.forEach((asteroid) => {
-      let asteroidBody = new CelestialBody(
-          asteroid.name,
-          asteroid.diameter / 2,
-          asteroid.gm / Util.GRAVITATIONALCONSTANT,
-          "lunasGenericasMap.jpg",
-          1,
-          new Vector3(0, 0, 0),
-          new Vector3(0, 0, 0),
-          null,
-          asteroid.a,
-          new Date(Date.UTC((asteroid.tp))),
-          asteroid.e,
-          asteroid.q,
-          asteroid.om,
-          asteroid.w,
-          asteroid.ma,
-          0x3339FF,
-          true
-      );
-    })
+        for (let i = 0; i < asteroids.length; i++) {
+          let asteroid = asteroids[i];
+          let asteroidBody = new CelestialBody(
+              asteroid.name,
+              asteroid.diameter / 2,
+              asteroid.gm / Util.GRAVITATIONALCONSTANT,
+              "lunasGenericasMap.jpg",
+              1,
+              new Vector3(0, 0, 0),
+              new Vector3(0, 0, 0),
+              null,
+              asteroid.a,
+              new Date(Date.UTC((asteroid.tp))),
+              asteroid.e,
+              asteroid.q,
+              asteroid.om,
+              asteroid.w,
+              asteroid.ma,
+              0x3339FF,
+              true
+          );
+        }
+      } catch (error) {
+        console.error("Error parsing CSV:", error);
+      }
+    }
+    processAsteroids();
 
     scene.add(...celestialBodyList.getMeshes());
     let bodyList = celestialBodyList.getCelestialBodies();

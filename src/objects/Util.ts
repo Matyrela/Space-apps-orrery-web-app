@@ -26,19 +26,22 @@ export class Util {
         return km/(1.496e8);
     }
 
-    static CSVToArray( csvPath: string) : NEO[] {
+    static CSVToArray(csvPath: string): Promise<NEO[]> {
         console.log("start parse")
-        let i = 0;
-        Papa.parse(csvPath, {
-            header: true,
-            download: true,
-            skipEmptyLines: true,
-            delimiter: ";",
-            complete: function (results) {
-                return results;
-            }
-        })
-        return [];
+        return new Promise((resolve, reject) => {
+            Papa.parse(csvPath, {
+                header: true,
+                download: true,
+                skipEmptyLines: true,
+                delimiter: ";",
+                complete: function (results) {
+                    resolve(results.data);
+                },
+                error: function (error) {
+                    reject(error);
+                }
+            })
+        });
     }
 
     static SUNMASS = 1.989e30;
