@@ -59,6 +59,10 @@ let celestialBodyList: CelestialBodyList
 
 let simulatedTime = new SimulatedTime();
 let date = new Date(Date.UTC(2000, 0, 3, 0, 0, 0));
+let newDate = new Date();
+//Global Variables
+var epoch = new Date('October 6, 2024');  // start the calendar 
+var simSpeed = 0.5 ; 
 
 const animation = { enabled: true, play: true }
 
@@ -331,19 +335,30 @@ function animate() {
     camera.aspect = canvas.clientWidth / canvas.clientHeight
     camera.updateProjectionMatrix()
     //cambiar
-    date = simulatedTime.getSimulatedTime(86400000);
+    date = simulatedTime.getSimulatedTime(500000);
 
-    console.log(date);
+    console.log(epoch);
 
 
     CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
-      celestialBody.update(date);
+      celestialBody.update(epoch, simSpeed);
     })
+    updateTheDate();
   }
 
   cameraControls.update()
   renderer.render(scene, camera)
 }
+
+function updateTheDate() 
+  { 
+  //  epoch.setTime(epoch.getTime() + simSpeed * 86400)
+  if (simSpeed == 1) {
+      epoch.setDate(epoch.getDate() + 1) ;            // At maximum speed, increment calendar by a day for each clock-cycle.
+  } else {  epoch.setTime(epoch.getTime() + simSpeed * 24 * 3600000) ; }  // 24 hours * milliseconds in an hour * simSpeed 
+    
+  //	 document.getElementById("modelDate").innerHTML = (epoch.getMonth() + 1) + "-" + epoch.getDate() + "-" + epoch.getFullYear() ;
+  }
 
 function goTo(cameraControls: OrbitControls, body: CelestialBody | null) {
   if (body === null) {

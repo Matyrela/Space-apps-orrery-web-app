@@ -23,6 +23,8 @@ export class CelestialBody {
     perihelion: number;
     meanLongitude: number;
     inclination: number;
+    period: number;
+    trueAnomalyS: number;
 
     constructor(
         name: string,
@@ -64,6 +66,8 @@ export class CelestialBody {
         this.perihelion = longitudeOfPerihelion - longitudeOfAscendingNode;
         this.meanLongitude = meanLongitude;
         this.inclination = inclination;
+        this.period = Math.sqrt(Math.pow(this.semiMajorAxis, 3));
+        this.trueAnomalyS = 0;
 
         const geometry = new THREE.SphereGeometry(radius, 32, 32);
         if (typeof texture === 'string') {
@@ -93,9 +97,9 @@ export class CelestialBody {
     }
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
-    update(date: Date) {
+    update(date: Date, simSpeed : number) {
         // Aquí iría la actualización de la posición basándose en las ecuaciones de Kepler
-        let vector = this.calculateOrbitPosition(date);
+        let vector = this.calculateOrbitPosition(date, simSpeed);
 
         console.log(vector);
 
@@ -103,10 +107,15 @@ export class CelestialBody {
     }
 
     // Función de placeholder para las ecuaciones de Kepler
-    calculateOrbitPosition(date: Date): THREE.Vector3 {
+    calculateOrbitPosition(date: Date , simSpeed : number): THREE.Vector3 {
 
-        let xOrbPlane = this.semiMajorAxis * (Math.cos(this.excentricAnomaly(date)) - this.e);
-        let yOrbPlane = this.semiMajorAxis * Math.sqrt(1 - Math.pow(this.e, 2)) * Math.sin(this.excentricAnomaly(date));
+        /* const trueAnomaly = this.trueAnomaly(date);
+        const r = this.radialDistance(date);
+
+        let xOrbPlane = r * Math.cos(trueAnomaly); // x in orbital plane
+        let yOrbPlane = r * Math.sin(trueAnomaly); // y in orbital plane
+        //let xOrbPlane = this.semiMajorAxis * (Math.cos(this.excentricAnomaly(date)) - this.e);
+        //let yOrbPlane = this.semiMajorAxis * Math.sqrt(1 - Math.pow(this.e, 2)) * Math.sin(this.excentricAnomaly(date));
 
         let xCart = xOrbPlane * (Math.cos(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.sin(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination))
             + yOrbPlane * (-Math.sin(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) - Math.cos(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) * Math.cos(this.inclination));
@@ -115,10 +124,70 @@ export class CelestialBody {
             + yOrbPlane * (-Math.sin(this.perihelion) * Math.sin(this.longitudeOfAscendingNode) + Math.cos(this.perihelion) * Math.cos(this.longitudeOfAscendingNode) * Math.cos(this.inclination));
 
         let zCart = xOrbPlane * (Math.sin(this.perihelion) * Math.sin(this.inclination))
-            + yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination));
+            + yOrbPlane * (Math.cos(this.perihelion) * Math.sin(this.inclination)); */
+            var pos = this.propagate(this.trueAnomalyS)
+            console.log(this.trueAnomalyS);
 
-        return new THREE.Vector3(xCart, zCart, yCart);
-    }
+            var currentPosition = [] ;
+            var deltaTime = 0 ;
+                
+           // Calculate mean motion n:
+               var n = (2 * Math.PI) / (this.period * 365.25) ;   // radians per day
+               
+           // Calculate Eccentric Anomaly E based on the orbital eccentricity and previous true anomaly:
+              var e = this.e ;
+              var f = this.trueAnomalyS;         // heavenlyBodies[hB].trueAnomoly ;
+              var eA = this.trueToEccentricAnomaly(e,f)            // convert from true anomaly to eccentric anomaly
+              
+           // Calculate current Mean Anomaly	
+              var m0 = eA - e * Math.sin(eA);	
+             
+           // deltaTime = (Math.abs(m0/n) - heavenlyBodies[hB].time) * simSpeed
+          //  deltaTime = Math.abs(m0/n) * simSpeed
+              deltaTime = simSpeed * n
+      
+           // Update Mean anomaly by adding the Mean Anomaly at Epoch to the mean motion * delaTime
+               var mA = deltaTime + m0
+              
+              this.time = this.time +  deltaTime // increment timer
+      
+              eA = this.eccentricAnomaly (e, mA) 
+              var trueAnomaly = this.eccentricToTrueAnomaly(e, eA) 
+              this.trueAnomalyS = trueAnomaly
+
+              var xCart = pos[0];
+              var yCart = pos[1];
+              var zCart = pos[2];
+            console.log("ycart: " + yCart)
+              return new THREE.Vector3(yCart, xCart, zCart);
+            }
+
+        
+
+
+    propagate(uA){
+        // Purpose: Determine a position on an orbital trajectory based on a true anomoly.
+        // Used by the traceOrbits function to draw the orbits.
+        var pos = [] ;
+        var xdot; var ydot; var zdot;            // velocity coordinates
+        var theta = uA;                          // Update true anomaly.
+        var smA = this.semiMajorAxis;                      // Semi-major Axis
+        var oI =  this.inclination * 0.01745329 ;                      // Orbital Inclination
+        var aP = this.longitudeOfPerihelion * 0.01745329 ;                       // Get the object's orbital elements.
+        var oE = this.e;                        // Orbital eccentricity
+        var aN = this.longitudeOfAscendingNode ;                       // ascending Node
+        var sLR = smA * (1 - oE^2) ;             // Compute Semi-Latus Rectum.
+        var r = sLR/(1 + oE * Math.cos(theta));  // Compute radial distance.
+        
+        // Compute position coordinates pos[0] is x, pos[1] is y, pos[2] is z
+        pos[0] = r * (Math.cos(aP + theta) * Math.cos(aN) - Math.cos(oI) * Math.sin(aP + theta) * Math.sin(aN)) ;  
+        pos[1] = r * (Math.cos(aP + theta) * Math.sin(aN) + Math.cos(oI) * Math.sin(aP + theta) * Math.cos(aN)) ;
+        pos[2] = r * (Math.sin(aP + theta) * Math.sin(oI)) ;
+
+        console.log(pos)
+        
+        return pos ;
+        }
 
     //T en segundos
     orbitalTime(): number {
@@ -148,26 +217,58 @@ export class CelestialBody {
     }
 
     //M en radianes
-    meanAnomaly(date): number {
-        let meanAnomaly = this.meanLongitude - this.longitudeOfPerihelion + Math.pow(this.getT(date), 2) * Math.cos(this.getT(date)) + Math.sin(this.getT(date));
-        console.log("MEAN ANOMALY: " + meanAnomaly);
-        return meanAnomaly;
+    meanAnomaly(date: Date): number {
+        let meanA = this.meanLongitude - this.longitudeOfPerihelion + Math.pow(this.getT(date), 2) + Math.cos(this.getT(date)) + Math.sin(this.getT(date));
+        return meanA;
+        //const elapsedSeconds = (date.getTime() - this.t0.getTime()) / 1000;
+        //const n = Math.sqrt(Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) / Math.pow(this.semiMajorAxis, 3)); // mean motion
+        //const M = n * elapsedSeconds; // M = n * (t - t0)
+        //console.log("Mean Anomaly: "+ M%(2*Math.PI));
+        //return M % (2 * Math.PI); // Keep it in the range [0, 2π]
     }
 
     //E en radianes
-    excentricAnomaly(date: Date): number {
-        //e0
-        //console.log("ITERACION:")
-        let en = this.meanAnomaly(date) + (this.ESTAR * Math.sin(this.meanAnomaly(date)));
-
-        while (Math.abs(this.calculateSumExcentricAnomaly(date, en)) <= Util.TOL) {
-            en = en + (this.calculateSumExcentricAnomaly(date, en));
+    eccentricAnomaly(e : number, M : number): number {
+        //const M = this.meanAnomaly(date);
+        //let E = M; // initial guess
+        //let delta = 1;
+        //while (Math.abs(delta) > 1e-6) {  // tolerance
+        //    delta = (E - this.e * Math.sin(E) - M) / (1 - this.e * Math.cos(E)); // Newton's iteration
+        //    E -= delta;
+        //}
+        //return E;
+        var eccentricAnomaly = 0;
+        var tol = 0.0001;  // tolerance
+        var eAo = M;       // initialize eccentric anomaly with mean anomaly
+        var ratio = 1;     // set ratio higher than the tolerance
+        while (Math.abs(ratio) > tol) {
+            var f_E = eAo - e * Math.sin(eAo) - M;
+            var f_Eprime = 1 - e * Math.cos(eAo);
+            ratio = f_E / f_Eprime;
+            if (Math.abs(ratio) > tol) {
+                eAo = eAo - ratio;
+            // console.log ("ratio  " + ratio) ;
+            }
+            else
+                eccentricAnomaly = eAo;
+        }
+        return eccentricAnomaly;
         }
 
-        console.log("EXCENTRIC ANOMALY: " + en);
-        return en;
+    trueToEccentricAnomaly(e,f) {
+        // http://mmae.iit.edu/~mpeet/Classes/MMAE441/Spacecraft/441Lecture19.pdf slide 7 
+        var eccentricAnomaly = 2* Math.atan(Math.sqrt((1-e)/(1+e))* Math.tan(f/2));
+            
+        return eccentricAnomaly ;
     }
 
+    eccentricToTrueAnomaly(e, E) {
+    // http://mmae.iit.edu/~mpeet/Classes/MMAE441/Spacecraft/441Lecture19.pdf slide 8
+        var trueAnomaly = 2 * Math.atan(Math.sqrt((1+e)/(1-e))* Math.tan(E/2));
+        return trueAnomaly
+    }
+    
+    
     calculateElapsedTime(t0: Date) {
         let actualTime = new Date().getTime();
         let elapsedTime = actualTime - t0.getTime();
@@ -186,18 +287,7 @@ export class CelestialBody {
         return this.calculateSumMeanAnomaly(date, En) / (1 - (this.ESTAR * Math.cos(En)));
     }
 
-    trueAnomaly(date: Date): number {
-        let E = this.excentricAnomaly(date);
-        let tan = Math.sqrt((1 + this.e) / (1 - this.e)) * Math.tan(E / 2);
 
-        //console.log("TRUE ANOMALY: " + 2 * Math.atan(tan));
-        return 2 * Math.atan(tan);
-    }
-
-    radialDistance(date: Date): number {
-        //console.log("RADIAL DISTANCE: " + (this.semiMajorAxis * (1 - Math.pow(this.e, 2))) / (1 + this.e * Math.cos(this.trueAnomaly(date))));
-        return (this.semiMajorAxis * (1 - Math.pow(this.e, 2))) / (1 + this.e * Math.cos(this.trueAnomaly(date)));
-    }
 
     // Método para actualizar el mesh visual
     updateMesh() {
@@ -216,3 +306,4 @@ export class CelestialBody {
     return this.radius;
   }
 }
+

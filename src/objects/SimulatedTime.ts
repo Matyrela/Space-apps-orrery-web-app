@@ -8,8 +8,13 @@ export class SimulatedTime {
     }
 
     getSimulatedTime(timeScale: number): Date {
-        let realElapsedTime = Date.now() - this.realStartTime;
-        let simulatedElapsedTime = realElapsedTime * timeScale;
-        return new Date(this.startTime + simulatedElapsedTime);
+        const realElapsedTime = Date.now() - this.realStartTime;
+        const simulatedElapsedTime = realElapsedTime * timeScale;
+
+        // Avoid large jumps by capping time increments
+        const maxTimeStep = 100*1000 * 60 * 60 * 24; // 1 day in milliseconds
+        const clampedSimulatedTime = Math.min(simulatedElapsedTime, maxTimeStep);
+
+        return new Date(this.startTime + clampedSimulatedTime);
     }
 }
