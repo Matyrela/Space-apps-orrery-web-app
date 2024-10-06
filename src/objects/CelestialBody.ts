@@ -101,6 +101,7 @@ export class CelestialBody {
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
     update(date: Date, simSpeed : number) {
+        if (this.name === "Sun") return;
         // Aquí iría la actualización de la posición basándose en las ecuaciones de Kepler
             let vector = this.calculateOrbitPosition(date, simSpeed);
             this.mesh.position.copy(vector);
@@ -203,11 +204,8 @@ export class CelestialBody {
                 const pos = this.propagate(i);  // Propagate the orbit to get the position
         
                 orbPos.push(new THREE.Vector3(pos[1]*Util.SIZE_SCALER, pos[2]*Util.SIZE_SCALER, pos[0]*Util.SIZE_SCALER));
-                
-    // Add the vertex to the array
-               
         
-                i += 0.0785;  // Increment the orbit angle
+                i += 0.001;  // Increment the orbit angle
             }
             
            

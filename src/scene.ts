@@ -1,23 +1,19 @@
 import GUI from 'lil-gui'
 import CameraControls from 'camera-controls';
 import * as THREE from 'three';
-
 import {
   AmbientLight,
-  AxesHelper, Clock,
-  GridHelper,
+  AxesHelper,
+  Clock,
   LoadingManager,
-  Mesh,
-  MeshLambertMaterial,
   PCFSoftShadowMap,
   PerspectiveCamera,
-  PlaneGeometry,
   PointLight,
   PointLightHelper,
   Scene,
   Vector3,
-  WebGLRenderer,
-} from 'three'
+  WebGLRenderer
+} from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module'
 import {toggleFullScreen} from './helpers/fullscreen'
 import {resizeRendererToDisplaySize} from './helpers/responsiveness'
@@ -32,7 +28,7 @@ CameraControls.install({THREE: THREE});
 
 const CANVAS_ID = 'scene'
 
-const renderSize = 100000
+const renderSize = 100000 * 256
 
 let canvas: HTMLElement
 let renderer: WebGLRenderer
@@ -50,6 +46,8 @@ let gui: GUI
 
 let selectedBody: BehaviorSubject<CelestialBody | null> = new BehaviorSubject(null);
 let selectedBodyFullyTransitioned: boolean = false;
+
+let orbitLines = []
 
 let searchBar: HTMLInputElement
 let similaritiesList: HTMLDivElement
@@ -157,15 +155,16 @@ function init() {
 
   // ===== 💡 LIGHTS =====
   {
-    ambientLight = new AmbientLight('white', 0.4)
-    pointLight = new PointLight('white', 20, 100)
-    pointLight.position.set(-2, 2, 2)
+    ambientLight = new AmbientLight('white', 0.05)
+    pointLight = new PointLight('white', 2.5, renderSize * 8)
+    pointLight.position.set(0, 0, 0)
     pointLight.castShadow = true
     pointLight.shadow.radius = 4
     pointLight.shadow.camera.near = 0.5
     pointLight.shadow.camera.far = 4000
     pointLight.shadow.mapSize.width = 2048
     pointLight.shadow.mapSize.height = 2048
+    pointLight.decay = 0;
     scene.add(ambientLight)
     scene.add(pointLight)
   }
@@ -184,25 +183,47 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    const planeGeometry = new PlaneGeometry(3, 3)
-    const planeMaterial = new MeshLambertMaterial({
-      color: 'gray',
-      emissive: 'teal',
-      emissiveIntensity: 0.2,
-      side: 2,
-      transparent: true,
-      opacity: 0.4,
-    })
-    const plane = new Mesh(planeGeometry, planeMaterial)
-    plane.rotateX(Math.PI / 2)
-    plane.receiveShadow = true
-    scene.add(plane)
-
-
     skybox = new Skybox(0, 0, 0, renderSize / 2, camera);
     scene.add(...skybox.getMesh());
 
+    skybox.galaxyVisible.subscribe((bool) => {
+      celestialBodyList.getCelestialBodies().forEach((body) => {
+        body.mesh.visible = !bool;
+        body.traceOrbits()
+      })
+
+      if (bool) {
+        orbitLines.forEach((line) => {
+          scene.remove(line);
+        });
+      }else{
+        orbitLines.forEach((line) => {
+          scene.add(line);
+        });
+      }
+    });
+
     celestialBodyList = CelestialBodyList.getInstance();
+
+    let sun = new CelestialBody(
+        "Sun",
+        696340,
+        1.989e30,
+        'sun.jpg',
+        1,
+        new Vector3(1, 1, 1),
+        new Vector3(0, 0, 0),
+        null,
+        0,
+        new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0xFDB813,
+        false
+    );
 
     let earth = new CelestialBody(
         "Earth",
@@ -370,7 +391,12 @@ function init() {
   // ===== 🕹️ CONTROLS =====
   {
     cameraControls.addEventListener('update', () => {
-      skybox.update();
+      let distance = camera.position.distanceTo(new Vector3(0, 0, 0))
+      if (distance < renderSize * 0.9) {
+        skybox.showGalaxy(false)
+      } else {
+        skybox.showGalaxy(true)
+      }
     })
 
     selectedBody.subscribe(async (body) => {
@@ -405,10 +431,6 @@ function init() {
     pointLightHelper = new PointLightHelper(pointLight, undefined, 'orange')
     pointLightHelper.visible = false
     scene.add(pointLightHelper)
-
-    const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
-    gridHelper.position.y = -0.01
-    scene.add(gridHelper)
   }
 
   // ===== 📈 STATS & CLOCK =====
@@ -461,9 +483,8 @@ function init() {
 function traceOrbits() {
   CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
     let line = celestialBody.traceOrbits();
-    scene.add(line);
+    orbitLines.push(line);
   })
-  
 }
 
 function animate() {
