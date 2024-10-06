@@ -247,7 +247,7 @@ export class CelestialBody {
             let i = 0.0;
         
             // Loop to propagate the orbit positions
-            while (i <= Math.PI * 2) {
+            while (i <= Math.PI * 2.1) {
                 const pos = this.propagate(i);  // Propagate the orbit to get the position
         
                 orbPos.push(new THREE.Vector3(pos[1]*Util.SIZE_SCALER, pos[2]*Util.SIZE_SCALER, pos[0]*Util.SIZE_SCALER));
