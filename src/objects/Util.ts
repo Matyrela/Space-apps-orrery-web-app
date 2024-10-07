@@ -1,7 +1,10 @@
 import Papa from "papaparse";
 import { NEO } from "./Neo";
+import {Font, FontData, FontLoader} from "three/examples/jsm/loaders/FontLoader";
 
 export class Util {
+  static font: Font;
+
   static dateToJulianDate(date: Date): number {
     let y = date.getUTCFullYear() + 8000;
     let m = date.getUTCMonth();
@@ -46,6 +49,16 @@ export class Util {
   static AU = 1.496e8
   static SIZE_SCALER = 10000
   static TOL = 1e-6;
+
+  static generateFont() {
+    return new Promise<void>((resolve, reject) => {
+      const loader = new FontLoader();
+      loader.load('fonts/helvetiker_regular.typeface.json', (font) => {
+        Util.font = font;
+        resolve();
+      });
+    });
+  }
 }
 
 export interface IRing {

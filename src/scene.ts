@@ -13,7 +13,6 @@ import {
   Vector3,
   WebGLRenderer
 } from 'three';
-import Stats from 'three/examples/jsm/libs/stats.module'
 import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style-map.css'
 import {Skybox} from "./objects/skybox";
@@ -39,7 +38,6 @@ let cameraControls: CameraControls;
 let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
 let clock: Clock
-let stats: Stats
 
 let selectedBody: BehaviorSubject<CelestialBody | null> = new BehaviorSubject(null);
 let selectedBodyFullyTransitioned: boolean = false;
@@ -68,6 +66,8 @@ let distanceFromCamera = 0;
 
 
 loadingManager = new LoadingManager();
+Util.generateFont()
+
 
 loadingManager.onStart = (url, itemsLoaded, itemsTotal) => {
   console.log('🔄 Comenzando la carga de recursos...');
@@ -640,11 +640,9 @@ function init() {
     scene.add(pointLightHelper)
   }
 
-  // ===== 📈 STATS & CLOCK =====
+  // ===== 📈 CLOCK =====
   {
     clock = new Clock()
-    stats = new Stats()
-    document.body.appendChild(stats.dom)
   }
 }
 
@@ -665,17 +663,16 @@ function animate() {
   requestAnimationFrame(animate);
 
   const delta = clock.getDelta();
-  stats.update();
 
   // Actualizar los cuerpos celestes
   CelestialBodyList.getInstance().getPlanets().forEach(celestialBody => {
     distanceFromCamera = camera.position.distanceTo(celestialBody.marker.position);
-    celestialBody.update(epoch, simSpeed, distanceFromCamera);
+    celestialBody.update(epoch, simSpeed, distanceFromCamera, camera);
   })
 
   celestialBodyList.getNeos().forEach(celestialBody => {
     distanceFromCamera = camera.position.distanceTo(celestialBody.marker.position);
-    celestialBody.update(epoch, simSpeed, distanceFromCamera);
+    celestialBody.update(epoch, simSpeed, distanceFromCamera, camera);
   });
 
   updateTheDate();

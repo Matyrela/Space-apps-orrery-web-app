@@ -232,3 +232,20 @@ hr {
     margin-top: 0.5em;
     font-size: 1.2em;
 }
+
+
+.back-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 1em;
+    z-index: 2;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border-radius: 0 0 1rem 0;
+}
+
+.back-button a {
+    color: #01e7e7;
+    text-decoration: none;
+}

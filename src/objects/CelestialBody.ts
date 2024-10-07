@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import {Euler, FrontSide, Vector3} from 'three';
-import {CelestialBodyList} from './CelestialBodyList';
 import {IRing, Util} from "./Util";
+import {FontLoader} from "three/examples/jsm/loaders/FontLoader";
+import {TextGeometry} from "three/examples/jsm/geometries/TextGeometry";
 
 export class CelestialBody {
     name: string;
@@ -30,6 +31,7 @@ export class CelestialBody {
     initialRotationBySecond: number;
     axisInclicnation: Euler;
     ringMesh: THREE.Mesh | undefined;
+    textMesh: THREE.Mesh | undefined;
 
 
     constructor(
@@ -54,7 +56,7 @@ export class CelestialBody {
         ring: IRing | undefined = undefined
     ) {
         this.name = name;
-        this.radius = Util.KmtoAU(radius)*10000;
+        this.radius = Util.KmtoAU(radius) * 10000;
         this.mass = mass;
         this.time = time;
         this.position = initialPosition;
@@ -99,10 +101,11 @@ export class CelestialBody {
         }
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.position.copy(this.position);
+        let positionClone = this.mesh.position.clone();
         this.mesh.rotation.copy(this.axisInclicnation);
 
         const markerGeometry = new THREE.SphereGeometry(10, 16, 16);
-        const markerMaterial = new THREE.MeshBasicMaterial({ color: orbitColor, transparent: true, opacity: 0.5 });
+        const markerMaterial = new THREE.MeshBasicMaterial({color: orbitColor, transparent: true, opacity: 0.5});
         this.marker = new THREE.Mesh(markerGeometry, markerMaterial);
         this.marker.position.copy(this.position);
 
@@ -126,35 +129,54 @@ export class CelestialBody {
 
             this.mesh.children.push(ringMesh);
         }
+
+        const textGeometry = new TextGeometry(this.name, {
+            font: Util.font,
+            size: 5,
+            depth: 0,
+        });
+        const textMaterial = new THREE.MeshBasicMaterial({color: orbitColor});
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        textMesh.position.set(positionClone.x, positionClone.y + (this.radius * 1.2 ), positionClone.z);
+        this.mesh.add(textMesh);
+        this.textMesh = textMesh;
     }
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
-    update(date: Date, simSpeed : number, distanceFromCamera : number) {
-        
+    update(date: Date, simSpeed: number, distanceFromCamera: number, camera: THREE.Camera) {
         let vector = this.calculateOrbitPosition(date, simSpeed);
 
-         // Tamaño base del marcador
+        // Tamaño base del marcador
         const baseSize = 1;
 
         // Calcular el tamaño del marcador en función de la distancia
         const scaleFactor = baseSize * (distanceFromCamera / 3000);
         this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        
-        this.mesh.rotation.copy(new Euler(this.mesh.rotation.x, this.mesh.rotation.y + this.rotationBySecond , this.mesh.rotation.z, "XZY"))
+
+        this.mesh.rotation.copy(new Euler(this.mesh.rotation.x, this.mesh.rotation.y + this.rotationBySecond, this.mesh.rotation.z, "XZY"));
+
+        if (!camera) return;
+        this.textMesh.lookAt(camera.position);
+
+        const textScaleFactor = distanceFromCamera / 500;
+        this.textMesh.scale.set(textScaleFactor, textScaleFactor, textScaleFactor);
 
         if (this.name === "Sun") {
             this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
-            this.marker.position.set(0,0,0);
+            this.marker.position.set(0, 0, 0);
             return;
         }
 
         this.marker.position.copy(vector);
         this.mesh.position.copy(vector);
-        if (this.ringMesh !== undefined){
-            this.mesh.children[0].position.copy( new Vector3(vector.x, vector.y, vector.z));
-
+        if (this.ringMesh !== undefined) {
+            this.mesh.children[0].position.copy(new Vector3(vector.x, vector.y, vector.z));
         }
+
+
+
     }
+
     // Función de placeholder para las ecuaciones de Kepler
     calculateOrbitPosition(date: Date , simSpeed : number): THREE.Vector3 {
 
