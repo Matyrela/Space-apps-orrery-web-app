@@ -14,15 +14,15 @@ import {
   WebGLRenderer
 } from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module'
-import {resizeRendererToDisplaySize} from './helpers/responsiveness'
+import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style-map.css'
-import {Skybox} from "./objects/skybox";
-import {CelestialBodyList} from "./objects/CelestialBodyList";
-import {CelestialBody} from "./objects/CelestialBody";
-import {BehaviorSubject} from 'rxjs'
-import {IRing, Util} from './objects/Util';
+import { Skybox } from "./objects/skybox";
+import { CelestialBodyList } from "./objects/CelestialBodyList";
+import { CelestialBody } from "./objects/CelestialBody";
+import { BehaviorSubject } from 'rxjs'
+import { IRing, Util } from './objects/Util';
 
-CameraControls.install({THREE: THREE});
+CameraControls.install({ THREE: THREE });
 
 const CANVAS_ID = 'scene'
 
@@ -58,7 +58,7 @@ let celestialBodyList: CelestialBodyList
 
 //Global Variables
 let epoch = new Date(Date.now());  // start the calendar 
-let simSpeedAbs = 1/2592000;
+let simSpeedAbs = 1 / 2592000;
 let simSpeed = 1;
 let simSpeedPrint = 0;
 let distanceFromCamera = 0;
@@ -137,7 +137,7 @@ function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
     canvas = document.querySelector(`canvas#${CANVAS_ID}`)!
-    renderer = new WebGLRenderer({canvas, antialias: true, alpha: true})
+    renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = PCFSoftShadowMap
@@ -286,197 +286,197 @@ function init() {
     celestialBodyList = CelestialBodyList.getInstance();
 
     let sun = new CelestialBody(
-        "Sun",
-        696340,
-        1.989e30,
-        'sun.jpg',
-        1,
-        new Vector3(1, 1, 1),
-        new Vector3(0, 0, 0),
-        0,
-        new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
-        0,
-        0,
-        0,
-        0,
-        0,
-        0xFDB813,
-        0.000072921158553,
-        new Euler(0, 0, 0, 'XYZ'),
-        false
+      "Sun",
+      696340,
+      1.989e30,
+      'sun.jpg',
+      1,
+      new Vector3(1, 1, 1),
+      new Vector3(0, 0, 0),
+      0,
+      new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
+      0,
+      0,
+      0,
+      0,
+      0,
+      0xFDB813,
+      0.000072921158553,
+      new Euler(0, 0, 0, 'XYZ'),
+      false
     );
 
     let earth = new CelestialBody(
-        "Earth",
-        6378,
-        5.972e24,
-        "earthMap.png",
-        1,
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, 0),
-        1.00000018,
-        new Date(Date.UTC(2024, 1, 4, 0, 0, 0)),
-        0.01673163,
-        102.93005885,
-        -5.11260389,
-        100.46691572,
-        -0.00054346,
-        0x22ABDF,
-        0.000072921158553,
-        new Euler(0.4396, 0.8641, 5.869, "XYZ"),
-        true
+      "Earth",
+      6378,
+      5.972e24,
+      "earthMap.png",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      1.00000018,
+      new Date(Date.UTC(2024, 1, 4, 0, 0, 0)),
+      0.01673163,
+      102.93005885,
+      -5.11260389,
+      100.46691572,
+      -0.00054346,
+      0x22ABDF,
+      0.000072921158553,
+      new Euler(0.4396, 0.8641, 5.869, "XYZ"),
+      true
     )
 
     let mars = new CelestialBody(
-        "Mars",
-        3389.5,
-        6.39e23,
-        "marsMap.jpg",
-        1,
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, 0),
-        1.52371034,
-        new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
-        0.09339410,
-        -23.94362959,
-        49.55953891,
-        -4.55343205,
-        1.84969142,
-        0xFF5E33,
-        0.00007088222,
-        new Euler(0.4396, 0.8641, 5.869, "XYZ"),
-        true
+      "Mars",
+      3389.5,
+      6.39e23,
+      "marsMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      1.52371034,
+      new Date(Date.UTC(2000, 0, 1, 0, 0, 0)),
+      0.09339410,
+      -23.94362959,
+      49.55953891,
+      -4.55343205,
+      1.84969142,
+      0xFF5E33,
+      0.00007088222,
+      new Euler(0.4396, 0.8641, 5.869, "XYZ"),
+      true
     )
 
     let jupiter = new CelestialBody(
-        "Jupiter",
-        69911,
-        1.898e27,
-        "JupiterMap.jpg",
-        1,
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, 0),
-        5.20288700,
-        new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
-        0.04838624,
-        14.72847983,
-        100.47390909,
-        34.39644051,
-        1.30439695,
-        0xA2440A,
-        0.00017538081,
-        new Euler(0.0545, 1.7541, 0.2575, "XYZ"),
-        true
+      "Jupiter",
+      69911,
+      1.898e27,
+      "JupiterMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      5.20288700,
+      new Date(Date.UTC(1999, 4, 20, 0, 0, 0)),
+      0.04838624,
+      14.72847983,
+      100.47390909,
+      34.39644051,
+      1.30439695,
+      0xA2440A,
+      0.00017538081,
+      new Euler(0.0545, 1.7541, 0.2575, "XYZ"),
+      true
     );
 
     let venus = new CelestialBody(
-        "Venus",
-        6051.8,
-        4.867e24,
-        "venusMap.jpg",
-        1,
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, 0),
-        0.72332102,
-        new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
-        0.00676399,
-        131.76755713,
-        76.67261496,
-        181.97970850,
-        3.39777545,
-        0xD8B712,
-        0.0000002994132,
-        new Euler(3.0960, 1.3383, 0.9578, "XYZ"),
-        true
+      "Venus",
+      6051.8,
+      4.867e24,
+      "venusMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      0.72332102,
+      new Date(Date.UTC(2014, 8, 5, 0, 0, 0)),
+      0.00676399,
+      131.76755713,
+      76.67261496,
+      181.97970850,
+      3.39777545,
+      0xD8B712,
+      0.0000002994132,
+      new Euler(3.0960, 1.3383, 0.9578, "XYZ"),
+      true
     );
 
     let saturn = new CelestialBody(
-        "Saturn",
-        58232,
-        5.683e26,
-        "saturnMap.jpg",
-        1,
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, 0),
-        9.53667594,
-        new Date(Date.UTC(1944, 8, 7, 0, 0, 0)),
-        0.05386179,
-        92.59887831,
-        113.66242448,
-        49.95424423,
-        2.48599187,
-        0xF6D624,
-        0.00016329833,
-        new Euler(0.4665, 1.9839, 0.4574, "XYZ"),
-        true,
-        {
-          ringTexture: "rings2.jpg",
-          innerRadiusMult: 1.2,
-          outerRadiusMult: 2.0
-        } as IRing
+      "Saturn",
+      58232,
+      5.683e26,
+      "saturnMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      9.53667594,
+      new Date(Date.UTC(1944, 8, 7, 0, 0, 0)),
+      0.05386179,
+      92.59887831,
+      113.66242448,
+      49.95424423,
+      2.48599187,
+      0xF6D624,
+      0.00016329833,
+      new Euler(0.4665, 1.9839, 0.4574, "XYZ"),
+      true,
+      {
+        ringTexture: "rings2.jpg",
+        innerRadiusMult: 1.2,
+        outerRadiusMult: 2.0
+      } as IRing
     );
 
     let mercury = new CelestialBody(
-        "Mercury",
-        2440,
-        3.285e23,
-        "mercuryMap.jpg",
-        1,
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, 0),
-        0.38709927,
-        new Date(Date.UTC(2021, 3, 27, 0, 0, 0)),
-        0.20563593,
-        77.45779628,
-        48.33076593,
-        252.25032350,
-        7.00497902,
-        0xA195A8,
-        0.00000123854412,
-        new Euler(0.000593, 0.844493, 0.852917, "XYZ"),
-        true
+      "Mercury",
+      2440,
+      3.285e23,
+      "mercuryMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      0.38709927,
+      new Date(Date.UTC(2021, 3, 27, 0, 0, 0)),
+      0.20563593,
+      77.45779628,
+      48.33076593,
+      252.25032350,
+      7.00497902,
+      0xA195A8,
+      0.00000123854412,
+      new Euler(0.000593, 0.844493, 0.852917, "XYZ"),
+      true
     );
 
     let uranus = new CelestialBody(
-        "Uranus",
-        25362,
-        8.681e25,
-        "uranusMap.jpg",
-        1,
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, 0),
-        19.18916464,
-        new Date(Date.UTC(1966, 5, 2, 0, 0, 0)),
-        0.04725744,
-        170.95427630,
-        74.01692503,
-        313.23810451,
-        0.77263783,
-        0x949AFF,
-        -0.00010104518,
-        new Euler(1.7074, 1.2915, 2.9839, "XYZ"),
-        true
+      "Uranus",
+      25362,
+      8.681e25,
+      "uranusMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      19.18916464,
+      new Date(Date.UTC(1966, 5, 2, 0, 0, 0)),
+      0.04725744,
+      170.95427630,
+      74.01692503,
+      313.23810451,
+      0.77263783,
+      0x949AFF,
+      -0.00010104518,
+      new Euler(1.7074, 1.2915, 2.9839, "XYZ"),
+      true
     );
 
     let neptune = new CelestialBody(
-        "Neptune",
-        24622,
-        1.024e26,
-        "neptuneMap.jpg",
-        1,
-        new Vector3(0, 0, 0),
-        new Vector3(0, 0, 0),
-        30.06992276,
-        new Date(Date.UTC(2042, 8, 15, 0, 0, 0)),
-        0.00859048,
-        44.96476227,
-        131.78422574,
-        -55.12002969,
-        1.77004347,
-        0x3339FF,
-        0.00010865669,
-        new Euler(0.4947, 2.2994, 0.7848, "XYZ"),
-        true
+      "Neptune",
+      24622,
+      1.024e26,
+      "neptuneMap.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      30.06992276,
+      new Date(Date.UTC(2042, 8, 15, 0, 0, 0)),
+      0.00859048,
+      44.96476227,
+      131.78422574,
+      -55.12002969,
+      1.77004347,
+      0x3339FF,
+      0.00010865669,
+      new Euler(0.4947, 2.2994, 0.7848, "XYZ"),
+      true
     );
 
     let moon = new CelestialBody(
@@ -499,71 +499,114 @@ function init() {
       new Euler(0.0269, 0.8497, 0.4647, "XYZ"),
       true
     );
-
-    scene.add(...celestialBodyList.getMeshes());
-    let bodyList = celestialBodyList.getCelestialBodies();
-    for (let body of bodyList) {
-      if (body.marker) {
-        scene.add(body.marker);
-      }
-    }
   }
 
-  // ===== 🕹️ CONTROLS =====
-  {
-    cameraControls.addEventListener('update', () => {
-      let distance = camera.position.distanceTo(new Vector3(0, 0, 0))
-      if (distance < renderSize * 0.9) {
-        skybox.showGalaxy(false)
-      } else {
-        skybox.showGalaxy(true)
+  scene.add(...celestialBodyList.getMeshes());
+  let bodyList = celestialBodyList.getCelestialBodies();
+  for (let body of bodyList) {
+    if (body.marker) {
+      scene.add(body.marker);
+      async function processAsteroids() {
+        try {
+          let asteroids = await Util.CSVToArray("data/dataset.csv");
+          console.log(asteroids);
+
+          for (let i = 0; i < asteroids.length; i++) {
+            let asteroid = asteroids[i];
+            let asteroidBody = new CelestialBody(
+              asteroid.name,
+              asteroid.diameter / 2,
+              asteroid.gm / Util.GRAVITATIONALCONSTANT,
+              "lunasGenericasMap.jpg",
+              1,
+              new Vector3(0, 0, 0),
+              new Vector3(0, 0, 0),
+              asteroid.a,
+              new Date(Date.UTC((asteroid.tp))),
+              asteroid.e,
+              asteroid.q,
+              asteroid.om,
+              asteroid.w,
+              asteroid.i,
+              0x7F7F7F,
+              0.0000002994132,
+              new Euler(0, 0, 0, 'XYZ'),
+              true
+            );
+
+          }
+        } catch (error) {
+          console.error("Error parsing CSV:", error);
+        }
       }
-    })
 
-    selectedBody.subscribe(async (body) => {
-      selectedBodyFullyTransitioned = false;
+      processAsteroids().then(() => {
+        scene.add(...celestialBodyList.getMeshes());
+        let bodyList = celestialBodyList.getCelestialBodies();
+        for (let body of bodyList) {
+          if (body.marker) {
+            scene.add(body.marker);
+          }
+        }
+        traceOrbits()
+      });
+    }
 
-      if (!body) return;
+    // ===== 🕹️ CONTROLS =====
+    {
+      cameraControls.addEventListener('update', () => {
+        let distance = camera.position.distanceTo(new Vector3(0, 0, 0))
+        if (distance < renderSize * 0.9) {
+          skybox.showGalaxy(false)
+        } else {
+          skybox.showGalaxy(true)
+        }
+      })
 
-      cameraControls.setPosition(
+      selectedBody.subscribe(async (body) => {
+        selectedBodyFullyTransitioned = false;
+
+        if (!body) return;
+
+        cameraControls.setPosition(
           selectedBody.getValue().getPosition().x,
           selectedBody.getValue().getPosition().y,
           selectedBody.getValue().getPosition().z,
           false
-      )
+        )
 
-      selectedBodyFullyTransitioned = true;
-    });
-  }
+        selectedBodyFullyTransitioned = true;
+      });
+    }
 
-  // ===== 🪄 HELPERS =====
-  {
-    axesHelper = new AxesHelper(4)
-    axesHelper.visible = false
-    scene.add(axesHelper)
+    // ===== 🪄 HELPERS =====
+    {
+      axesHelper = new AxesHelper(4)
+      axesHelper.visible = false
+      scene.add(axesHelper)
 
-    pointLightHelper = new PointLightHelper(pointLight, undefined, 'orange')
-    pointLightHelper.visible = false
-    scene.add(pointLightHelper)
-  }
+      pointLightHelper = new PointLightHelper(pointLight, undefined, 'orange')
+      pointLightHelper.visible = false
+      scene.add(pointLightHelper)
+    }
 
-  // ===== 📈 STATS & CLOCK =====
-  {
-    clock = new Clock()
-    stats = new Stats()
-    document.body.appendChild(stats.dom)
+    // ===== 📈 STATS & CLOCK =====
+    {
+      clock = new Clock()
+      stats = new Stats()
+      document.body.appendChild(stats.dom)
+    }
   }
 }
-
-function traceOrbits() {
-  CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
-    let line = celestialBody.traceOrbits();
-    orbitLines.push(line);
-    orbitLines.forEach((line) => {
-      scene.add(line);
-    });
-  })
-}
+  function traceOrbits() {
+    CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
+      let line = celestialBody.traceOrbits();
+      orbitLines.push(line);
+      orbitLines.forEach((line) => {
+        scene.add(line);
+      });
+    })
+  }
 
 function animate() {
   requestAnimationFrame(animate);
@@ -574,10 +617,10 @@ function animate() {
   // Actualizar los cuerpos celestes
   CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
     distanceFromCamera = camera.position.distanceTo(celestialBody.marker.position);
-    if (celestialBody.name === "Moon"){
-      simSpeed = simSpeed/100;
+    if (celestialBody.name === "Moon") {
+      simSpeed = simSpeed / 100;
       celestialBody.update(epoch, simSpeed, distanceFromCamera);
-      simSpeed = simSpeed*100;
+      simSpeed = simSpeed * 100;
     } else {
       celestialBody.update(epoch, simSpeed, distanceFromCamera);
     }
@@ -586,16 +629,16 @@ function animate() {
 
   if (selectedBody.getValue() !== null && selectedBodyFullyTransitioned) {
     cameraControls.moveTo(
-        selectedBody.getValue().getPosition().x,
-        selectedBody.getValue().getPosition().y,
-        selectedBody.getValue().getPosition().z,
-        false
+      selectedBody.getValue().getPosition().x,
+      selectedBody.getValue().getPosition().y,
+      selectedBody.getValue().getPosition().z,
+      false
     )
     cameraControls.setTarget(
-        selectedBody.getValue().getPosition().x,
-        selectedBody.getValue().getPosition().y,
-        selectedBody.getValue().getPosition().z,
-        false
+      selectedBody.getValue().getPosition().x,
+      selectedBody.getValue().getPosition().y,
+      selectedBody.getValue().getPosition().z,
+      false
     )
 
   }
