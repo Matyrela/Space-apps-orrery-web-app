@@ -44,14 +44,17 @@ let stats: Stats
 let selectedBody: BehaviorSubject<CelestialBody | null> = new BehaviorSubject(null);
 let selectedBodyFullyTransitioned: boolean = false;
 
-let orbitLines = []
-
 let searchBar: HTMLInputElement
 let similaritiesList: HTMLDivElement
 let similaritiesListObjects: HTMLDivElement
 let dateText: HTMLParagraphElement
 let inputDate: HTMLInputElement
 let timeScaleText: HTMLParagraphElement
+
+let planetOrbitsCheck: HTMLInputElement
+let NEOOrbitCheck: HTMLInputElement
+let planetOrbits = []
+let NEOOrbits = []
 
 let skybox: Skybox
 let celestialBodyList: CelestialBodyList
@@ -129,9 +132,6 @@ textures.forEach(texture => {
   textureLoader.load(`${texture}`);
 });
 
-
-
-
 function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
@@ -149,12 +149,42 @@ function init() {
     inputDate = document.querySelector('input#time-slider')!;
     timeScaleText = document.querySelector('p#time-scale');
 
+    planetOrbitsCheck = document.querySelector("input#orbits-planet");
+    NEOOrbitCheck = document.querySelector("input#orbits-neo");
+
+    planetOrbitsCheck.checked = true;
+    NEOOrbitCheck.checked = true;
+
+    planetOrbitsCheck.addEventListener('change', () => {
+      if (planetOrbitsCheck.checked) {
+        planetOrbits.forEach((line) => {
+          scene.add(line);
+        });
+      } else {
+        planetOrbits.forEach((line) => {
+          scene.remove(line);
+        });
+      }
+    });
+
+    NEOOrbitCheck.addEventListener('change', () => {
+      if (NEOOrbitCheck.checked) {
+        NEOOrbits.forEach((line) => {
+          scene.add(line);
+        });
+      } else {
+        NEOOrbits.forEach((line) => {
+          scene.remove(line);
+        });
+      }
+    });
+
     dateText.textContent = epoch.toDateString();
 
     inputDate.addEventListener('input', () => {
       simulatedTime();
       if (celestialBodyList) {
-        celestialBodyList.getCelestialBodies().forEach(celestialBody => {
+        celestialBodyList.getPlanets().forEach(celestialBody => {
           celestialBody.setRotationSpeed(celestialBody.initialRotationBySecond * simSpeed * 2592000 / 32);
         });
       }
@@ -181,7 +211,17 @@ function init() {
 
     function listAll() {
       similaritiesList.style.display = 'block';
-      celestialBodyList.getCelestialBodies().forEach((body) => {
+      let planetTitle = document.createElement('h4');
+      planetTitle.innerHTML = "Planets";
+      similaritiesListObjects.appendChild(planetTitle);
+
+      celestialBodyList.getPlanets().forEach((body) => {
+        generateElements(body);
+      });
+      let neoTitle = document.createElement('h4');
+      neoTitle.innerHTML = "Near Earth Objects";
+      similaritiesListObjects.appendChild(neoTitle);
+      celestialBodyList.getNeos().forEach((body) => {
         generateElements(body);
       });
     }
@@ -222,7 +262,21 @@ function init() {
 
       similaritiesList.style.display = 'block';
       similaritiesListObjects.innerHTML = '';
-      celestialBodyList.getCelestialBodies().forEach((body) => {
+      similaritiesList.style.display = 'block';
+      let planetTitle = document.createElement('h4');
+      planetTitle.innerHTML = "Planets";
+      similaritiesListObjects.appendChild(planetTitle);
+      celestialBodyList.getPlanets().forEach((body) => {
+        if (body.getName().toLowerCase().includes(query.toLowerCase())) {
+          generateElements(body);
+        }
+      });
+
+      let neoTitle = document.createElement('h4');
+      neoTitle.innerHTML = "Near Earth Objects";
+      similaritiesListObjects.appendChild(neoTitle);
+      let objects = celestialBodyList.getNeos();
+      objects.forEach((body) => {
         if (body.getName().toLowerCase().includes(query.toLowerCase())) {
           generateElements(body);
         }
@@ -266,17 +320,23 @@ function init() {
     skybox.galaxyVisible.subscribe((bool) => {
       if (celestialBodyList === undefined) return;
 
-      celestialBodyList.getCelestialBodies().forEach((body) => {
+      celestialBodyList.getPlanets().forEach((body) => {
         body.mesh.visible = !bool;
         body.traceOrbits()
       })
 
       if (bool) {
-        orbitLines.forEach((line) => {
+        planetOrbits.forEach((line) => {
+          scene.remove(line);
+        });
+        NEOOrbits.forEach((line) => {
           scene.remove(line);
         });
       } else {
-        orbitLines.forEach((line) => {
+        planetOrbits.forEach((line) => {
+          scene.add(line);
+        });
+        NEOOrbits.forEach((line) => {
           scene.add(line);
         });
       }
@@ -304,6 +364,7 @@ function init() {
         new Euler(0, 0, 0, 'XYZ'),
         false
     );
+    celestialBodyList.addPlanet(sun);
 
     let earth = new CelestialBody(
         "Earth",
@@ -325,6 +386,7 @@ function init() {
         new Euler(0.4396, 0.8641, 5.869, "XYZ"),
         true
     )
+    celestialBodyList.addPlanet(earth);
 
     let mars = new CelestialBody(
         "Mars",
@@ -346,6 +408,7 @@ function init() {
         new Euler(0.4396, 0.8641, 5.869, "XYZ"),
         true
     )
+    celestialBodyList.addPlanet(mars);
 
     let jupiter = new CelestialBody(
         "Jupiter",
@@ -367,6 +430,7 @@ function init() {
         new Euler(0.0545, 1.7541, 0.2575, "XYZ"),
         true
     );
+    celestialBodyList.addPlanet(jupiter);
 
     let venus = new CelestialBody(
         "Venus",
@@ -388,6 +452,7 @@ function init() {
         new Euler(3.0960, 1.3383, 0.9578, "XYZ"),
         true
     );
+    celestialBodyList.addPlanet(venus);
 
     let saturn = new CelestialBody(
         "Saturn",
@@ -414,6 +479,7 @@ function init() {
           outerRadiusMult: 2.0
         } as IRing
     );
+    celestialBodyList.addPlanet(saturn);
 
     let mercury = new CelestialBody(
         "Mercury",
@@ -435,6 +501,7 @@ function init() {
         new Euler(0.000593, 0.844493, 0.852917, "XYZ"),
         true
     );
+    celestialBodyList.addPlanet(mercury);
 
     let uranus = new CelestialBody(
         "Uranus",
@@ -456,6 +523,7 @@ function init() {
         new Euler(1.7074, 1.2915, 2.9839, "XYZ"),
         true
     );
+    celestialBodyList.addPlanet(uranus);
 
     let neptune = new CelestialBody(
         "Neptune",
@@ -477,6 +545,7 @@ function init() {
         new Euler(0.4947, 2.2994, 0.7848, "XYZ"),
         true
     );
+    celestialBodyList.addPlanet(neptune);
 
     async function processAsteroids() {
       try {
@@ -505,7 +574,7 @@ function init() {
               new Euler(0, 0, 0, 'XYZ'),
               true
           );
-
+          celestialBodyList.addNeo(asteroidBody);
         }
       } catch (error) {
         console.error("Error parsing CSV:", error);
@@ -513,15 +582,24 @@ function init() {
     }
 
     processAsteroids().then(() => {
-      scene.add(...celestialBodyList.getMeshes());
-      let bodyList = celestialBodyList.getCelestialBodies();
+      scene.add(...celestialBodyList.getNeoMeshes());
+      let bodyList = celestialBodyList.getNeos();
       for (let body of bodyList) {
         if (body.marker) {
           scene.add(body.marker);
         }
       }
-      traceOrbits()
+      traceOrbits(bodyList, true);
     });
+
+    scene.add(...celestialBodyList.getPlanetMeshes());
+    let bodyList = celestialBodyList.getPlanets();
+    for (let body of bodyList) {
+      if (body.marker) {
+        scene.add(body.marker);
+      }
+    }
+    traceOrbits(bodyList, false);
   }
 
   // ===== 🕹️ CONTROLS =====
@@ -570,13 +648,16 @@ function init() {
   }
 }
 
-function traceOrbits() {
-  CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
+function traceOrbits(bodies: CelestialBody[], isNeo: boolean) {
+  bodies.forEach(celestialBody => {
     let line = celestialBody.traceOrbits();
-    orbitLines.push(line);
-    orbitLines.forEach((line) => {
-      scene.add(line);
-    });
+    if (isNeo) {
+      NEOOrbits.push(line);
+    } else {
+      planetOrbits.push(line);
+    }
+
+    scene.add(line);
   })
 }
 
@@ -587,10 +668,16 @@ function animate() {
   stats.update();
 
   // Actualizar los cuerpos celestes
-  CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
+  CelestialBodyList.getInstance().getPlanets().forEach(celestialBody => {
     distanceFromCamera = camera.position.distanceTo(celestialBody.marker.position);
     celestialBody.update(epoch, simSpeed, distanceFromCamera);
   })
+
+  celestialBodyList.getNeos().forEach(celestialBody => {
+    distanceFromCamera = camera.position.distanceTo(celestialBody.marker.position);
+    celestialBody.update(epoch, simSpeed, distanceFromCamera);
+  });
+
   updateTheDate();
 
   if (selectedBody.getValue() !== null && selectedBodyFullyTransitioned) {

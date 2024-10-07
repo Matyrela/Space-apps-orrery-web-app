@@ -28,13 +28,21 @@
       <div class="similarities">
         <input id="body-search" class="search-bar" placeholder="Search for a celestial body" />
         <div id="similarities">
-          <div class="similarities-title">Similarities</div>
-          <hr>
           <div class="similarities-list" id="similarities-object"></div>
         </div>
       </div>
 
       <div class="time-slider">
+        <input type="checkbox" id="orbits-planet"/>
+        <label for="orbits-planet">Show planet orbits</label>
+
+        <br>
+
+        <input type="checkbox" id="orbits-neo"/>
+        <label for="orbits-neo">Show NEO orbits</label>
+
+        <hr>
+
         <p id="time-scale">0.00 days / sec</p>
         <input type="range" id="time-slider" min="0" max="100" value="50" class="slider" />
       </div>

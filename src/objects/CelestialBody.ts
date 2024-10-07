@@ -126,15 +126,12 @@ export class CelestialBody {
 
             this.mesh.children.push(ringMesh);
         }
-
-        CelestialBodyList.getInstance().addCelestialBody(this);
     }
 
     // Función de actualización del cuerpo celeste, a invocar cada frame
     update(date: Date, simSpeed : number, distanceFromCamera : number) {
         
         let vector = this.calculateOrbitPosition(date, simSpeed);
-        //console.log(vector);
 
          // Tamaño base del marcador
         const baseSize = 1;
@@ -157,8 +154,6 @@ export class CelestialBody {
             this.mesh.children[0].position.copy( new Vector3(vector.x, vector.y, vector.z));
 
         }
-        // console.log(this.mesh.rotation.y)
-        // console.log(this.rotationBySecond)
     }
     // Función de placeholder para las ecuaciones de Kepler
     calculateOrbitPosition(date: Date , simSpeed : number): THREE.Vector3 {
@@ -210,7 +205,6 @@ export class CelestialBody {
               var xCart = pos[0]*Util.SIZE_SCALER;
               var yCart = pos[1]*Util.SIZE_SCALER;
               var zCart = pos[2]*Util.SIZE_SCALER;
-            //console.log("ycart: " + yCart)
               return new THREE.Vector3(yCart, zCart, xCart);
             }
 
@@ -273,25 +267,6 @@ export class CelestialBody {
             return line;  // Return the line if you want to add it to the scene later
         }
 
-        addPlanetMarker(pos: THREE.Vector3): THREE.Mesh {
-            // Create a sphere to represent the planet's position
-            let sphereGeometry = new THREE.SphereGeometry(100, 32, 32);  // Small dot with radius 0.5
-            let sphereMaterial = new THREE.MeshBasicMaterial({ color: this.orbitColor, transparent: true, opacity: 0.5 });  // Same color, semi-transparent
-        
-            // Create the sphere mesh and position it at the planet's current coordinates
-            let planetMarker = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            planetMarker.position.set(pos[0], pos[1], pos[2]);
-
-            return planetMarker;
-        }
-    
-    //T en segundos
-    orbitalTime(): number {
-        let t = (4 * Math.pow(Math.PI, 2)) / (Util.GRAVITATIONALCONSTANT * (Util.SUNMASS + this.mass) * Math.pow(this.semiMajorAxis, 3));
-        //console.log("ORBITAL TIME: " + Math.sqrt(t));
-        return Math.sqrt(t);
-    }
-
     julianDate(date: Date): number {
         let y = date.getUTCFullYear() + 8000;
         let m = date.getUTCMonth();
@@ -302,13 +277,11 @@ export class CelestialBody {
             m += 12;
         }
         let julianDate = (y * 365) + (y / 4) - (y / 100) + (y / 400) - 1200820 + (m * 153 + 3) / 5 - 92 + d - 1;
-        //console.log("JULIAN DATE: " + julianDate);
         return julianDate;
     }
 
     getT(date: Date): number {
         let JulianDate = this.julianDate(date);
-        //console.log("T: " + (JulianDate - 2451545)/36525);
         return (JulianDate - 2451545)/36525;
     }
 
