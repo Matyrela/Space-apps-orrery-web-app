@@ -105,7 +105,6 @@ loadingManager.onError = (url) => {
 
 const textureLoader = new THREE.TextureLoader(loadingManager);
 let textures = [
-  "blanco.png",
   "earthMap.png",
   "galaxy.png",
   "JupiterMap.jpg",
@@ -115,12 +114,9 @@ let textures = [
   "mercuryMap.jpg",
   "moon.jpg",
   "neptuneMap.jpg",
-  "PIA00342~medium.jpg",
-  "rings.jpg",
   "rings2.jpg",
   "roundearth.png",
   "saturnMap.jpg",
-  "saturnRingsMap.png",
   "skybox.png",
   "space-background.webp",
   "sun.jpg",
