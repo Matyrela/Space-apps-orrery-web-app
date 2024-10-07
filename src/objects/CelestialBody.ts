@@ -13,15 +13,21 @@ export class CelestialBody {
     velocity: THREE.Vector3;  // Velocidad (puede ser opcional)
     mesh: THREE.Mesh;         // Representación visual en Three.js
     semiMajorAxis: number;
+    semiMajorAxis_Cy: number;
     t0: Date;
     e: number;
+    e_Cy: number;
     ESTAR: number;
     longitudeOfPerihelion: number;
+    longitudeOfPerihelion_Cy: number;
     longitudeOfAscendingNode: number;
+    longitudeOfAscendingNode_Cy: number;
     excentricAnomalyE: number;
     perihelion: number;
     meanLongitude: number;
+    meanLongitude_Cy: number;
     inclination: number;
+    inclination_Cy: number;
     period: number;
     trueAnomalyS: number;
     orbitColor: THREE.ColorRepresentation;
@@ -41,12 +47,18 @@ export class CelestialBody {
         initialPosition: THREE.Vector3,
         initialVelocity: THREE.Vector3,
         a: number,
+        a_Cy: number,
         t0: Date,
         e: number,
+        e_Cy: number,
         longitudeOfPerihelion: number,
+        longitudeOfPerihelion_Cy: number,
         longitudeOfAscendingNode: number,
+        longitudeOfAScendingNode_Cy: number,
         meanLongitude: number,
+        meanLongitude_Cy: number,
         inclination: number,
+        inclination_Cy: number,
         orbitColor: THREE.ColorRepresentation,
         rotation: number,
         axis: Euler,
