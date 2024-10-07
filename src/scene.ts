@@ -84,8 +84,8 @@ loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
 loadingManager.onLoad = () => {
   console.log('✅ ¡Todos los recursos cargados! Iniciando la escena...');
   init();
-  animate()
-  traceOrbits()
+  animate();
+  traceOrbits();
 
   // @ts-ignore
   document.querySelector("div#over-canvas").style.animation = 'fadeIn 1s forwards';
@@ -479,6 +479,27 @@ function init() {
         true
     );
 
+    let moon = new CelestialBody(
+      "Moon",
+      1737.4,
+      7.34767309e22,
+      "moon.jpg",
+      1,
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0, 0),
+      0.00257,
+      new Date(Date.UTC(2020, 10, 6, 0, 0, 0)),
+      0.0549,
+      0.0024,
+      125.08,
+      100.46691572,
+      5.145,
+      0xA1A1A1,
+      0.001,
+      new Euler(0.0269, 0.8497, 0.4647, "XYZ"),
+      true
+    );
+
     scene.add(...celestialBodyList.getMeshes());
     let bodyList = celestialBodyList.getCelestialBodies();
     for (let body of bodyList) {
@@ -553,7 +574,13 @@ function animate() {
   // Actualizar los cuerpos celestes
   CelestialBodyList.getInstance().getCelestialBodies().forEach(celestialBody => {
     distanceFromCamera = camera.position.distanceTo(celestialBody.marker.position);
-    celestialBody.update(epoch, simSpeed, distanceFromCamera);
+    if (celestialBody.name === "Moon"){
+      simSpeed = simSpeed/100;
+      celestialBody.update(epoch, simSpeed, distanceFromCamera);
+      simSpeed = simSpeed*100;
+    } else {
+      celestialBody.update(epoch, simSpeed, distanceFromCamera);
+    }
   })
   updateTheDate();
 

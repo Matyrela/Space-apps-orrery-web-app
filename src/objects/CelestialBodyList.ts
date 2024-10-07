@@ -20,6 +20,15 @@ export class CelestialBodyList {
         this.celestialBodies.push(celestialBody);
     }
 
+    public getCelestialBody(name: string): CelestialBody | null {
+        for (const celestialBody of this.celestialBodies) {
+            if (celestialBody.name.toLowerCase() === name.toLowerCase()) {
+                return celestialBody;
+            }
+        }
+        return null;  // Si no se encuentra el cuerpo celeste
+    }
+
     public getCelestialBodies(): CelestialBody[] {
         return this.celestialBodies;
     }
