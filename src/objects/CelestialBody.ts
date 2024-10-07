@@ -3,6 +3,7 @@ import {Euler, FrontSide, Vector3} from 'three';
 import {IRing, Util} from "./Util";
 import {FontLoader} from "three/examples/jsm/loaders/FontLoader";
 import {TextGeometry} from "three/examples/jsm/geometries/TextGeometry";
+import {CelestialBodyList} from "./CelestialBodyList";
 
 export class CelestialBody {
     name: string;
@@ -165,6 +166,17 @@ export class CelestialBody {
             this.marker.scale.set(scaleFactor, scaleFactor, scaleFactor);
             this.marker.position.set(0, 0, 0);
             return;
+        }
+
+        if (this.name === "Moon") {
+            let earth = CelestialBodyList.getInstance().getPlanets().find(planet => planet.name === "Earth")!;
+
+            vector.setX(vector.x + earth.getPosition().x);
+            vector.setY(vector.y + earth.getPosition().y);
+            vector.setZ(vector.z + earth.getPosition().z);
+
+            this.marker.position.copy(vector);
+            this.mesh.position.copy(vector);
         }
 
         this.marker.position.copy(vector);
@@ -402,7 +414,6 @@ export class CelestialBody {
     }
 
     setRotationSpeed(number: number) {
-        console.log("rotation aaaaaaaa", number)
         this.rotationBySecond = number;
     }
 }

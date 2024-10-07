@@ -202,7 +202,6 @@ function init() {
       }
 
       timeScaleText.innerHTML = simSpeedPrint.toFixed(2).toString() + " days / sec";
-      console.log(simSpeed)
     }
 
     simulatedTime();
@@ -547,11 +546,31 @@ function init() {
     );
     celestialBodyList.addPlanet(neptune);
 
+    let moon = new CelestialBody(
+        "Moon",
+        1737.4,
+        7.34767309e22,
+        "moon.jpg",
+        1,
+        new Vector3(0, 0, 0),
+        new Vector3(0, 0, 0),
+        0.00257,
+        new Date(Date.UTC(2020, 10, 6, 0, 0, 0)),
+        0.0549,
+        0.0024,
+        125.08,
+        100.46691572,
+        5.145,
+        0xA1A1A1,
+        0.001,
+        new Euler(0.0269, 0.8497, 0.4647, "XYZ"),
+        true
+    );
+    celestialBodyList.addPlanet(moon);
+
     async function processAsteroids() {
       try {
         let asteroids = await Util.CSVToArray("data/dataset.csv");
-        console.log(asteroids);
-
         for (let i = 0; i < asteroids.length; i++) {
           let asteroid = asteroids[i];
           let asteroidBody = new CelestialBody(
@@ -648,6 +667,10 @@ function init() {
 
 function traceOrbits(bodies: CelestialBody[], isNeo: boolean) {
   bodies.forEach(celestialBody => {
+    if (!isNeo) {
+      if (celestialBody.getName() === "Moon") return;
+    }
+
     let line = celestialBody.traceOrbits();
     if (isNeo) {
       NEOOrbits.push(line);
@@ -667,7 +690,13 @@ function animate() {
   // Actualizar los cuerpos celestes
   CelestialBodyList.getInstance().getPlanets().forEach(celestialBody => {
     distanceFromCamera = camera.position.distanceTo(celestialBody.marker.position);
-    celestialBody.update(epoch, simSpeed, distanceFromCamera, camera);
+    if (celestialBody.name === "Moon"){
+      simSpeed = simSpeed/100;
+      celestialBody.update(epoch, simSpeed, distanceFromCamera, camera);
+      simSpeed = simSpeed*100;
+    } else {
+      celestialBody.update(epoch, simSpeed, distanceFromCamera, camera);
+    }
   })
 
   celestialBodyList.getNeos().forEach(celestialBody => {

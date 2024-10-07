@@ -27,7 +27,6 @@ export class Util {
   }
 
   static CSVToArray(csvPath: string): Promise<NEO[]> {
-    console.log("start parse")
     return new Promise((resolve, reject) => {
       Papa.parse(csvPath, {
         header: true,
